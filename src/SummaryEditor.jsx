@@ -8,6 +8,8 @@ const openai = new OpenAI({
 });
 
 function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary }) {
+  console.log('Summaryeditor profileData :',profileData);
+  console.log('Summaryeditor generatedSummary :',generatedSummary);
   const [isEditing, setIsEditing] = useState(false);
   const [editedSummary, setEditedSummary] = useState('');
   const [loading, setLoading] = useState(false);

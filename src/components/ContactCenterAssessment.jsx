@@ -1,5 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import OpenAI from 'openai';
+import { transcribeLongAudio } from '../lib/api/speechToText';
+import { uploadRecording } from '../lib/api/vertex';
+import { analyzeContentCenterSkill } from '../lib/api/vertex';
+
 
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,
@@ -111,6 +115,7 @@ function ContactCenterAssessment({ onComplete }) {
       });
 
       const scenarioData = JSON.parse(response.choices[0].message.content);
+      console.log("scenarioData : ", scenarioData);
       setScenario(scenarioData);
     } catch (error) {
       console.error('Error generating scenario:', error);
@@ -130,7 +135,8 @@ function ContactCenterAssessment({ onComplete }) {
       };
 
       mediaRecorder.current.onstop = () => {
-        const audioBlob = new Blob(audioChunks.current, { type: 'audio/wav' });
+        const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
+        console.log("audioBlob in stop :", audioBlob)
         setAudioBlob(audioBlob);
         // Release microphone access
         stream.getTracks().forEach(track => track.stop());
@@ -146,10 +152,12 @@ function ContactCenterAssessment({ onComplete }) {
     }
   };
 
+
   const stopRecording = () => {
     if (mediaRecorder.current && mediaRecorder.current.state === 'recording') {
       mediaRecorder.current.stop();
       setRecording(false);
+
     }
   };
 
@@ -196,6 +204,89 @@ function ContactCenterAssessment({ onComplete }) {
       }));
     } catch (error) {
       console.error('Error analyzing response:', error);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+
+  const analyzeRecord = async () => {
+    setAnalyzing(true);
+    try {
+      const currentCategory = skillCategories[categoryIndex];
+      const skill = currentCategory.skills[currentSkill];
+      //upload first the audio
+      const formData = new FormData();
+      const file = new File([audioBlob], `audio-${Date.now()}.opus`, { type: "audio/opus" });
+      console.log('file :', file);
+      formData.append('file', file);
+      formData.append('destinationName', `audio-${Date.now()}.opus`);
+      const res = await uploadRecording(formData);
+      //Analyse the response
+      let data = {
+        "fileUri": res.data.fileUri,
+        "scenarioData": scenario
+      }
+      const transcriptionResult = await generateAudioTranscription(res.data.fileUri);
+      console.log("transcriptionResult :", transcriptionResult);
+      setResponse(transcriptionResult.transcription);
+      const response = await analyzeContentCenterSkill(data);
+      console.log('ContactCenter analysis response : ', response);
+      const feedback = response.data;
+      setFeedback(feedback);
+      setScores(prev => ({
+        ...prev,
+        [`${currentCategory.name}-${skill.name}`]: feedback
+      }));
+    } catch (error) {
+      console.error('Error analyzing response:', error);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+
+  const generateAudioTranscription = async (fileUri) => {
+    try {
+      const data = {
+        "fileUri": fileUri,
+        "languageCode": "en-US",
+      }
+      const response = await transcribeLongAudio(data);
+      return response;
+    } catch (error) {
+      console.error('Error transcribing recording:', error);
+      alert('Error transcribing recording. Please try again.');
+      return null
+    }
+  }
+
+  const transcribeAudio = async () => {
+    setAnalyzing(true);
+    try {
+      const currentCategory = skillCategories[categoryIndex];
+      const skill = currentCategory.skills[currentSkill].name;
+      const formData = new FormData();
+      // Append the audio blob to FormData
+      const file = new File([audioBlob], `audio-${Date.now()}.opus`, { type: "audio/opus" });
+      console.log('file :', file);
+      formData.append('file', file);
+      formData.append('destinationName', `audio-${skill}.opus`);
+      // upload the audio in google cloud storage
+      const res = await uploadRecording(formData);
+      console.log('fileUri blob : ', res);
+      console.log('fileUri blob : ', res.data.fileUri);
+      //transcribe the audio 
+      const data = {
+        "fileUri": res.data.fileUri,
+        "languageCode": "en-US",
+      }
+      const response = await transcribeLongAudio(data);
+      console.log("Deno :", response);
+      setResponse(response.transcription);
+    } catch (error) {
+      console.error('Error analyzing recording:', error);
+      alert('Error analyzing recording. Please try again.');
     } finally {
       setAnalyzing(false);
     }
@@ -249,7 +340,7 @@ function ContactCenterAssessment({ onComplete }) {
           <h3 className="text-2xl font-bold text-gray-900 mb-6">
             Contact Center Skills Assessment
           </h3>
-          
+
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
             <h4 className="text-lg font-semibold text-gray-800 mb-4">What to Expect</h4>
             <div className="space-y-4">
@@ -279,7 +370,7 @@ function ContactCenterAssessment({ onComplete }) {
               This assessment will evaluate your contact center skills through interactive scenarios
               and AI-powered analysis of your responses.
             </p>
-            
+
             <button
               onClick={() => setStarted(true)}
               className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center gap-2 mx-auto"
@@ -304,7 +395,7 @@ function ContactCenterAssessment({ onComplete }) {
       <div className="space-y-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h3 className="text-xl font-bold text-gray-900 mb-6">Assessment Summary</h3>
-          
+
           {skillCategories.map((category, catIndex) => (
             <div key={catIndex} className="mb-8 last:mb-0">
               <h4 className="text-lg font-semibold text-gray-800 mb-4">{category.name}</h4>
@@ -374,7 +465,7 @@ function ContactCenterAssessment({ onComplete }) {
           />
         </div>
         <div className="mt-2 text-xs text-gray-500">
-          Category {categoryIndex + 1}/{skillCategories.length} • 
+          Category {categoryIndex + 1}/{skillCategories.length} •
           Skill {currentSkill + 1}/{currentCategory.skills.length}
         </div>
       </div>
@@ -384,7 +475,7 @@ function ContactCenterAssessment({ onComplete }) {
         <h3 className="text-lg font-semibold text-gray-800 mb-4">
           {currentCategory?.name}: {skill?.name}
         </h3>
-        
+
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -422,13 +513,12 @@ function ContactCenterAssessment({ onComplete }) {
                 <button
                   onClick={recording ? stopRecording : startRecording}
                   disabled={!!feedback || !micPermission}
-                  className={`px-6 py-3 rounded-full font-medium flex items-center gap-2 ${
-                    recording
-                      ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                      : micPermission
+                  className={`px-6 py-3 rounded-full font-medium flex items-center gap-2 ${recording
+                    ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                    : micPermission
                       ? 'bg-blue-50 text-blue-600 hover:bg-blue-100'
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  }`}
+                    }`}
                 >
                   {recording ? (
                     <>
@@ -457,7 +547,7 @@ function ContactCenterAssessment({ onComplete }) {
 
               {!feedback && (response || audioBlob) && !analyzing && (
                 <button
-                  onClick={analyzeResponse}
+                  onClick={analyzeRecord}
                   className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700"
                 >
                   Submit Response for Analysis
@@ -562,7 +652,7 @@ function ContactCenterAssessment({ onComplete }) {
           >
             Exit Assessment
           </button>
-          
+
           {feedback && (
             <button
               onClick={handleNext}

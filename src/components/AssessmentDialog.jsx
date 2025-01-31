@@ -136,7 +136,8 @@ function AssessmentDialog({ isOpen, onClose, languages, profileData }) {
             </button>
           </div>
 
-          {!showingProfile && (
+          {!showingProfile && 
+          (
             <>
               {/* Progress Indicator */}
               <div className="sticky top-14 bg-white z-10 pb-4 mb-6">
@@ -243,7 +244,13 @@ function AssessmentDialog({ isOpen, onClose, languages, profileData }) {
                 />
               )}
             </>
-          )}
+          )
+          /* (
+            <ContactCenterAssessment
+              onComplete={handleContactCenterAssessmentComplete}
+            />
+          ) */
+          }
 
           {showingProfile && finalRecommendations && (
             <REPSProfile

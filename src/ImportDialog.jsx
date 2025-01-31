@@ -330,6 +330,9 @@ function ImportDialog({ isOpen, onClose, onImport }) {
       setProgress(100);
       
       onImport({ ...combinedData, generatedSummary: summary });
+      console.log("combinedData : " ,combinedData);
+      console.log("summary : " ,summary);
+      
       onClose();
     } catch (err) {
       console.error('Profile parsing error:', err);

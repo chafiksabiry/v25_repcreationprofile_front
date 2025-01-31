@@ -18,3 +18,12 @@ export const uploadRecording = async (analyzeData) => {
         throw error.response?.data || error;
     }
 };
+
+export const analyzeContentCenterSkill = async (analyzeData) => {
+    try {
+        const responseData = await api.post('/vertex/contactCenter/evaluate', analyzeData);
+        return responseData;
+    } catch (error) {
+        throw error.response?.data || error;
+    }
+};

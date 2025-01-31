@@ -46,7 +46,7 @@ function LanguageAssessment({ language, onComplete }) {
       };
 
       mediaRecorder.current.onstop = () => {
-        const audioBlob = new Blob(audioChunks.current, { type: 'audio/flac' });
+        const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
         setAudioBlob(audioBlob);
       };
 
@@ -128,14 +128,15 @@ function LanguageAssessment({ language, onComplete }) {
     try {
       const formData = new FormData();
       // Append the audio blob to FormData
-      formData.append('file', audioBlob, 'recording1.flac');
-      formData.append('destinationName', 'recording1.flac');
+      const file = new File([audioBlob], `audio-${Date.now()}.opus`, { type: "audio/opus" });
+      console.log('file :', file);
+      formData.append('file', file);
+      formData.append('destinationName', `audio-${Date.now()}.opus`);
       const res = await uploadRecording(formData);
       console.log('fileUri blob : ', res);
       const data = {
         "fileUri": res.data.fileUri,
         "textToCompare": passage?.text,
-        //"textToCompare": "La mondialisation (globalization en anglais) est un processus historique, pluriséculaire, de mise en relation des sociétés du monde entier, ou plutôt du Monde, avec une majuscule, devenu un lieu commun à toute l'humanité. L'accélération sans précédent des flux, de la production et des échanges, que connaît actuellement l'humanité n'est que la phase la plus récente de la mondialisation."
       }
       const response = await analyzeRecordingVertex(data);
       console.log("Deno :", response);
@@ -268,7 +269,7 @@ function LanguageAssessment({ language, onComplete }) {
                           style={{ width: `${(data == null) ? 0 : data.score}%` }}
                         />
                       </div>
-                      <p className="text-sm text-gray-600">{data.feedback}</p>
+                      <p className="text-sm text-gray-600">{(data == null) ? "" : data.feedback}</p>
                     </div>
                   )
               )}

@@ -4,6 +4,7 @@ import LanguageAssessment from './LanguageAssessment';
 import ContactCenterAssessment from './ContactCenterAssessment';
 import REPSProfile from './REPSProfile';
 import OpenAI from 'openai';
+import { useProfile } from '../hooks/useProfile';
 
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,
@@ -11,6 +12,7 @@ const openai = new OpenAI({
 });
 
 function AssessmentDialog({ isOpen, onClose, languages, profileData }) {
+  const { profile, loading: profileLoading, error: profileError, updateLanguageAssessment, addAssessment } = useProfile();
   const [currentLanguage, setCurrentLanguage] = useState(0);
   const [assessmentResults, setAssessmentResults] = useState({});
   const [phase, setPhase] = useState('language');
@@ -20,17 +22,28 @@ function AssessmentDialog({ isOpen, onClose, languages, profileData }) {
   const [analyzing, setAnalyzing] = useState(false);
   const [showingProfile, setShowingProfile] = useState(false);
 
-  const handleLanguageAssessmentComplete = (results) => {
-    setAssessmentResults(prev => ({
-      ...prev,
-      languages: {
-        ...prev.languages,
-        [languages[currentLanguage].language]: results
-      }
-    }));
-    setShowLanguageSummary(true);
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleLanguageAssessmentComplete = async (results) => {
+    try {
+      // Save language assessment results to the database
+      await updateLanguageAssessment(
+        profile._id,
+        languages[currentLanguage].language,
+        results
+      );
+
+      setAssessmentResults(prev => ({
+        ...prev,
+        languages: {
+          ...prev.languages,
+          [languages[currentLanguage].language]: results
+        }
+      }));
+      
+      setShowLanguageSummary(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+      console.error('Error saving language assessment:', error);
+    }
   };
 
   const handleNextLanguage = () => {
@@ -54,14 +67,25 @@ function AssessmentDialog({ isOpen, onClose, languages, profileData }) {
   };
 
   const handleContactCenterAssessmentComplete = async (results) => {
-    setAssessmentResults(prev => ({
-      ...prev,
-      contactCenter: results
-    }));
-    await generateFinalRecommendations({
-      ...assessmentResults,
-      contactCenter: results
-    });
+    try {
+      // Save contact center assessment results
+      await addAssessment(profile._id, {
+        type: 'contact-center',
+        ...results
+      });
+
+      setAssessmentResults(prev => ({
+        ...prev,
+        contactCenter: results
+      }));
+
+      await generateFinalRecommendations({
+        ...assessmentResults,
+        contactCenter: results
+      });
+    } catch (error) {
+      console.error('Error saving contact center assessment:', error);
+    }
   };
 
   const generateFinalRecommendations = async (results) => {

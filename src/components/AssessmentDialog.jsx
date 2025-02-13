@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog } from '@headlessui/react';
 import LanguageAssessment from './LanguageAssessment';
 import ContactCenterAssessment from './ContactCenterAssessment';
@@ -13,7 +13,7 @@ const openai = new OpenAI({
 
 function AssessmentDialog({ isOpen, onClose, languages, profileData, onProfileUpdate }) {
   console.log('Profile Data :', profileData);
-  const { profile, loading: profileLoading, error: profileError, updateLanguageAssessment, addAssessment } = useProfile();
+  const { profile, loading: profileLoading, error: profileError, updateLanguageAssessment, addAssessment, addContactCenterAssessment } = useProfile();
   const [currentLanguage, setCurrentLanguage] = useState(0);
   const [assessmentResults, setAssessmentResults] = useState({});
   const [phase, setPhase] = useState('language');
@@ -33,7 +33,7 @@ function AssessmentDialog({ isOpen, onClose, languages, profileData, onProfileUp
         languages[currentLanguage].language,
         results
       );
-      console.log("updatedProfile : ",updatedProfile);
+      console.log("updatedProfile : ", updatedProfile);
       setAssessmentResults(prev => ({
         ...prev,
         languages: {
@@ -74,23 +74,51 @@ function AssessmentDialog({ isOpen, onClose, languages, profileData, onProfileUp
     }
   };
 
-  const handleContactCenterAssessmentComplete = async (results) => {
+  const saveContactCenterAssessmentResult = async (results) => {
+    console.log('saveContactCenterAssessmentResult param :', results);
     try {
-      // Save contact center assessment results
-      await addAssessment(profileData._id, {
-        type: 'contact-center',
-        ...results
-      });
+      /*       setAssessmentResults(prev => ({
+              contactCenter: {...results}
+            }));
+            console.log("assessmentResults :", assessmentResults) */
+      let contactCenterBody = {
+        assessment: {
+          category: results.category,
+          skill: results.skill,
+          score: results.score,
+          strengths: results.strengths,
+          improvements: results.improvements,
+          feedback: results.feedback,
+          tips: results.tips,
+          keyMetrics: results.keyMetrics
+        }
+      };
+      // Store results in database
+      const addContactCenterAssessmentResult = await addContactCenterAssessment(profileData._id, contactCenterBody);
+      console.log("addContactCenterAssessmentResult : ", addContactCenterAssessmentResult);
+      // Update parent component's profileData
+      if (onProfileUpdate) {
+        onProfileUpdate(addContactCenterAssessmentResult);
+      }
+    } catch (error) {
+      console.error('Error saving contact center assessment:', error);
+    }
+  };
 
+  const handleContactCenterAssessmentComplete = async (results) => {
+    console.log('handleContactCenterAssessmentComplete param :', results);
+    try {
+      console.log("assessmentResults in handleContactCenterAssessmentComplete before :", assessmentResults)
       setAssessmentResults(prev => ({
         ...prev,
-        contactCenter: results
+        contactCenter: results,
       }));
-
-      await generateFinalRecommendations({
+      let updatedResult = {
         ...assessmentResults,
         contactCenter: results
-      });
+      };
+      console.log("updatedResult :", updatedResult)
+      await generateFinalRecommendations(updatedResult);
     } catch (error) {
       console.error('Error saving contact center assessment:', error);
     }
@@ -148,6 +176,10 @@ function AssessmentDialog({ isOpen, onClose, languages, profileData, onProfileUp
       setAnalyzing(false);
     }
   };
+
+  useEffect(() => {
+    console.log('Assessment Results Updated:', assessmentResults);
+  }, [assessmentResults]);
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
@@ -270,21 +302,17 @@ function AssessmentDialog({ isOpen, onClose, languages, profileData, onProfileUp
                   )
                 ) : (
                   <ContactCenterAssessment
+                    saveResults={saveContactCenterAssessmentResult}
                     onComplete={handleContactCenterAssessmentComplete}
                   />
                 )}
               </>
             )
-            /* (
-              <ContactCenterAssessment
-                onComplete={handleContactCenterAssessmentComplete}
-              />
-            ) */
           }
 
           {showingProfile && finalRecommendations && (
             <REPSProfile
-              assessmentResults={{ ...finalRecommendations, languages: assessmentResults.languages }}
+              assessmentResults={{ ...finalRecommendations, languages: assessmentResults.languages, contactCenter: assessmentResults.contactCenter }}
               profileData={profileData}
             />
           )}

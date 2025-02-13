@@ -148,6 +148,22 @@ export const useProfile = (profileId) => {
     }
   };
 
+  // Add new function to the hook
+  const addContactCenterAssessment = async (id, assessment) => {
+    try {
+      setLoading(true);
+      const updatedProfile = await profileApi.addContactCenterAssessment(id, assessment);
+      setProfile(updatedProfile);
+      setError(null);
+      return updatedProfile;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     profile,
     loading,
@@ -159,6 +175,7 @@ export const useProfile = (profileId) => {
     updateLanguageAssessment,
     updateProfileData,
     addAssessment,
-    deleteProfile
+    deleteProfile,
+    addContactCenterAssessment
   };
 };

@@ -52,52 +52,61 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     // Validate languages (at least one required)
     if (!editedProfile.personalInfo.languages?.length) {
       errors.languages = 'At least one language is required';
+      console.error('Languages validation failed:', errors.languages);
     }
 
     // Validate name
     if (!editedProfile.personalInfo.name?.trim()) {
       errors.name = 'Name is required';
+      console.error('Name validation failed:', errors.name);
     }
 
     // Validate location
     if (!editedProfile.personalInfo.location?.trim()) {
       errors.location = 'Location is required';
+      console.error('Location validation failed:', errors.location);
     }
 
     // Validate email
-    if (!editedProfile.personalInfo.email?.trim()) {
-      errors.email = 'Email is required';
-    } else if (!emailRegex.test(editedProfile.personalInfo.email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-
-    // Validate phone
-    if (!editedProfile.personalInfo.phone?.trim()) {
-      errors.phone = 'Phone number is required';
-    } else if (!phoneRegex.test(editedProfile.personalInfo.phone.replace(/\s+/g, ''))) {
-      errors.phone = 'Please enter a valid phone number';
-    }
-
-    // Validate current role
-    if (!editedProfile.professionalSummary.currentRole?.trim()) {
+   if (!editedProfile.professionalSummary.currentRole?.trim()) {
       errors.currentRole = 'Current role is required';
+      console.error('Current role validation failed:', errors.currentRole);
     }
 
     // Validate years of experience
     if (!editedProfile.professionalSummary.yearsOfExperience?.trim()) {
       errors.yearsExperience = 'Years of experience is required';
+      console.error('Years of experience validation failed:', errors.yearsExperience);
     }
 
     // Validate industries (at least one required)
     if (!editedProfile.professionalSummary.industries?.length) {
       errors.industries = 'At least one industry is required';
+      console.error('Industries validation failed:', errors.industries);
     }
 
     // Validate notable companies (at least one required)
     if (!editedProfile.professionalSummary.notableCompanies?.length) {
       errors.companies = 'At least one notable company is required';
+      console.error('Companies validation failed:', errors.companies);
+    }  if (!editedProfile.personalInfo.email?.trim()) {
+      errors.email = 'Email is required';
+      console.error('Email validation failed:', errors.email);
+      } else if (!emailRegex.test(editedProfile.personalInfo.email)) {
+      errors.email = 'Please enter a valid email address';
+      console.error('Email validation failed:', errors.email);
     }
 
+    // Validate phone
+    if (!editedProfile.personalInfo.phone?.trim()) {
+      errors.phone = 'Phone number is required';
+      console.error('Phone validation failed:', errors.phone);
+    } else if (!phoneRegex.test(editedProfile.personalInfo.phone.replace(/\s+/g, ''))) {
+      errors.phone = 'Please enter a valid phone number';
+      console.error('Phone validation failed:', errors.phone);
+    }
+
+    console.log('Validation errors before setting state:', errors);
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -110,41 +119,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     }
   };
 
-  /*  const handleProfileChange = async (field, value) => {
-     try {
-       // Update the profile state immediately
-       const updatedPersonalInfo = {
-         ...editedProfile.personalInfo,
-         [field]: value
-       };
- 
-       const updatedProfile = {
-         ...editedProfile,
-         personalInfo: updatedPersonalInfo
-       };
- 
-       setEditedProfile(updatedProfile);
- 
-       // Show validation error if field is empty
-       if (!value.trim()) {
-         setValidationErrors(prev => ({
-           ...prev,
-           [field]: `${field.charAt(0).toUpperCase() + field.slice(1)} is required`
-         }));
-       } else {
-         // Clear validation error if field has value
-         setValidationErrors(prev => ({
-           ...prev,
-           [field]: ''
-         }));
- 
-         // Update backend
-         await updateBasicInfo(editedProfile._id, updatedPersonalInfo);
-       }
-     } catch (error) {
-       console.error('Error updating profile:', error);
-     }
-   }; */
   const handleProfileChanges = async (field, value) => {
     try {
       // Update the profile state immediately
@@ -471,7 +445,9 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   };
 
   const pushToRepsProfile = () => {
-    if (validateProfile()) {
+    const isValid = validateProfile();
+    console.log('validateProfile() result:', isValid);
+    if (isValid) {
       setShowAssessment(true);
     } else {
       // Scroll to the first error
@@ -481,7 +457,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
-    //setShowAssessment(true);
   };
 
   // Render validation error message

@@ -556,6 +556,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         {title === 'Professional Skills' && '💼'}
         {title === 'Soft Skills' && '🤝'}
         {title === 'Notable Companies' && '🌟'}
+        {title === 'Industries' && '🏭'}
         <span className="ml-2">{title}</span>
       </h3>
       <div className="flex flex-wrap gap-2">
@@ -1215,6 +1216,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
             {renderSkillSection('Technical Skills', editedProfile.skills.technical)}
             {renderSkillSection('Professional Skills', editedProfile.skills.professional)}
             {renderSkillSection('Soft Skills', editedProfile.skills.soft)}
+            {renderSkillSection('Industries', editedProfile.professionalSummary.industries)}
             {renderSkillSection('Notable Companies', editedProfile.professionalSummary.notableCompanies)}
           </div>
 

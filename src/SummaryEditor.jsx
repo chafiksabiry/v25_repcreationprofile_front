@@ -563,13 +563,18 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   const renderExperienceSection = () => {
     const formatDate = (date) => {
       if (date === 'present') return 'Present';
-      if (date instanceof Date) {
+      if (!date) return '';  // Handle null/undefined dates
+      try {
+        const dateObj = new Date(date);
+        if (isNaN(dateObj.getTime())) return date; // Return as is if invalid date
         return new Intl.DateTimeFormat('en-US', { 
           month: 'short',
           year: 'numeric'
-        }).format(new Date(date));
+        }).format(dateObj);
+      } catch (error) {
+        console.error('Error formatting date:', error);
+        return date; // Return original value if formatting fails
       }
-      return date; // fallback
     };
 
     return (

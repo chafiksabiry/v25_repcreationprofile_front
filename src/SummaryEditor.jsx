@@ -43,6 +43,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     soft: ''
   });
   const [tempProfileDescription, setTempProfileDescription] = useState('');
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
   const proficiencyLevels = [
     { value: 'A1', label: 'A1 - Beginner', description: 'Can understand and use basic phrases, introduce themselves' },
@@ -530,23 +531,25 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     }
   };
 
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+  };
+
   const regenerateSummary = async () => {
     try {
       setLoading(true);
       
-      // First, ensure we have the OpenAI API key
       const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
       if (!apiKey) {
         throw new Error('OpenAI API key is required');
       }
 
-      // Create OpenAI client instance
       const openai = new OpenAI({
         apiKey: apiKey,
         dangerouslyAllowBrowser: true
       });
 
-      // Generate the summary using OpenAI
       const response = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
@@ -571,7 +574,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
       const newSummary = response.choices[0].message.content;
       
-      // Update both the local state and the database
       setEditedSummary(newSummary);
       setEditedProfile(prev => ({
         ...prev,
@@ -581,7 +583,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         }
       }));
 
-      // Save to database
       await updateProfileData(editedProfile._id, {
         professionalSummary: {
           ...editedProfile.professionalSummary,
@@ -589,15 +590,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         }
       });
 
-      // Ensure we're not in editing mode after regenerating
       setIsEditing(false);
-      
-      // Show success message
-      alert('Professional summary has been regenerated and saved successfully!');
+      showToast('Professional summary has been regenerated successfully!');
       
     } catch (error) {
       console.error('Failed to regenerate summary:', error);
-      alert('Failed to regenerate summary. Please try again.');
+      showToast('Failed to regenerate summary. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -1607,6 +1605,28 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         profileData={editedProfile}
         onProfileUpdate={handleAssessmentUpdate}
       />
+
+      {/* Add Toast Component */}
+      {toast.show && (
+        <div className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg transition-all transform duration-500 ${
+          toast.type === 'success' 
+            ? 'bg-green-500 text-white' 
+            : 'bg-red-500 text-white'
+        }`}>
+          <div className="flex items-center space-x-2">
+            {toast.type === 'success' ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+            <span className="font-medium">{toast.message}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

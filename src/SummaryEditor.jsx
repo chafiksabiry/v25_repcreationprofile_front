@@ -3,6 +3,29 @@ import { useProfile } from './hooks/useProfile';
 import openaiClient from './lib/ai/openaiClient';
 import { OpenAI } from 'openai';
 
+// Add CSS styles for error highlighting
+const styles = `
+  @keyframes highlightError {
+    0% { background-color: rgba(239, 68, 68, 0.2); }
+    50% { background-color: rgba(239, 68, 68, 0.3); }
+    100% { background-color: rgba(239, 68, 68, 0.2); }
+  }
+
+  .highlight-error {
+    animation: highlightError 1s ease-in-out;
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+  }
+`;
+
+// Add styles to document
+if (!document.getElementById('summary-editor-styles')) {
+  const styleSheet = document.createElement('style');
+  styleSheet.id = 'summary-editor-styles';
+  styleSheet.textContent = styles;
+  document.head.appendChild(styleSheet);
+}
+
 function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onProfileUpdate }) {
   const { profile, loading: profileLoading, error: profileError, updateBasicInfo, updateExperience, updateSkills, updateProfileData } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
@@ -355,6 +378,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           ...prev,
           industries: 'At least one industry is required'
         }));
+      } else {
+        // Clear validation error if there are still industries
+        setValidationErrors(prev => ({
+          ...prev,
+          industries: ''
+        }));
       }
 
       await updateProfileData(editedProfile._id, {
@@ -421,6 +450,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         setValidationErrors(prev => ({
           ...prev,
           companies: 'At least one notable company is required'
+        }));
+      } else {
+        // Clear validation error if there are still companies
+        setValidationErrors(prev => ({
+          ...prev,
+          companies: ''
         }));
       }
 
@@ -631,16 +666,28 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       // Redirect to external website
       window.location.href = 'https://rep-dashboard.harx.ai/profile';
     } else {
+      // Update validation errors state
+      setValidationErrors(errors);
+      
       // Use setTimeout to ensure the DOM has updated with the error elements
       setTimeout(() => {
         const firstErrorKey = Object.keys(errors)[0];
         const errorElement = document.getElementById(`error-${firstErrorKey}`);
         if (errorElement) {
           errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // Add a temporary highlight effect
+          errorElement.classList.add('highlight-error');
+          setTimeout(() => {
+            errorElement.classList.remove('highlight-error');
+          }, 2000);
         } else {
           console.error('Error element not found:', firstErrorKey);
         }
-      }, 0);
+      }, 100);
+
+      // Show error toast
+      showToast('Please fill in all required fields', 'error');
     }
   };
 
@@ -664,6 +711,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           if (!tempIndustry.trim()) return;
           const updatedIndustries = [...(editedProfile.professionalSummary.industries || []), tempIndustry];
           
+          // Clear validation error when adding industry
+          setValidationErrors(prev => ({
+            ...prev,
+            industries: ''
+          }));
+          
           await updateProfileData(editedProfile._id, {
             professionalSummary: {
               ...editedProfile.professionalSummary,
@@ -683,6 +736,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         } else if (type === 'notableCompanies') {
           if (!tempCompany.trim()) return;
           const updatedCompanies = [...(editedProfile.professionalSummary.notableCompanies || []), tempCompany];
+          
+          // Clear validation error when adding company
+          setValidationErrors(prev => ({
+            ...prev,
+            companies: ''
+          }));
           
           await updateProfileData(editedProfile._id, {
             professionalSummary: {
@@ -826,6 +885,9 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               </div>
             ))}
           </div>
+          {/* Show validation errors in both edit and view modes */}
+          {type === 'industries' && renderError(validationErrors.industries, 'industries')}
+          {type === 'notableCompanies' && renderError(validationErrors.companies, 'companies')}
           {editingProfile && (
             <div className="flex gap-2">
               <input

@@ -287,7 +287,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           if (!val.trim()) return 'Phone is required';
           const phoneRegex = /^\+?[\d\s-]{10,}$/;
           return phoneRegex.test(val) ? '' : 'Please enter a valid phone number';
-        }
+        },
+        languages: (val) => val.length === 0 ? 'At least one language is required' : ''
       };
   
       // Get the appropriate validation function or use a default one
@@ -516,14 +517,21 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   const removeLanguage = async (index) => {
     console.log('editedProfile : ', editedProfile);
     try {
-      if (editedProfile.personalInfo.languages.length <= 1) {
+      const updatedLanguages = editedProfile.personalInfo.languages.filter((_, i) => i !== index);
+
+      // Set validation error if removing the last language
+      if (updatedLanguages.length === 0) {
         setValidationErrors(prev => ({
           ...prev,
           languages: 'At least one language is required'
         }));
-        return;
+      } else {
+        // Clear validation error if there are still languages
+        setValidationErrors(prev => ({
+          ...prev,
+          languages: ''
+        }));
       }
-      const updatedLanguages = editedProfile.personalInfo.languages.filter((_, i) => i !== index);
 
       await updateBasicInfo(editedProfile._id, {
         ...editedProfile.personalInfo,
@@ -1334,10 +1342,18 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
             <h2 className="text-3xl font-bold text-gray-900">Your Professional Story ✨</h2>
             <button
               onClick={() => {
-                if (!editingProfile) {
+                if (editingProfile) {
+                  // When saving, validate the profile
+                  const { errors } = validateProfile();
+                  setValidationErrors(errors);
+                  if (Object.keys(errors).length === 0) {
+                    setEditingProfile(false);
+                  }
+                } else {
+                  // When entering edit mode, clear validation errors
                   setValidationErrors(prev => ({ ...prev, languages: '' }));
+                  setEditingProfile(true);
                 }
-                setEditingProfile(!editingProfile)
               }}
               className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200"
             >
@@ -1570,21 +1586,24 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   <p className="text-xl font-semibold text-gray-800">{editedProfile.personalInfo.phone || 'Not specified'}</p>
                   {renderError(validationErrors.phone, 'phone')}
                 </div>
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl col-span-1">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">🌍 Languages</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {editedProfile.personalInfo.languages.map((lang, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-white/50 text-gray-700 rounded-full text-sm font-medium group relative"
-                      >
-                        <span>{lang.language}</span>
-                        <span className="text-blue-600 ml-1">({lang.proficiency})</span>
-                        <div className="absolute hidden group-hover:block bg-black text-white text-xs rounded p-2 z-10 bottom-full mb-1 left-1/2 transform -translate-x-1/2 w-48">
-                          {proficiencyLevels.find(level => level.value === lang.proficiency)?.description}
-                        </div>
-                      </span>
-                    ))}
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      {editedProfile.personalInfo.languages.map((lang, index) => (
+                        <span
+                          key={index}
+                          className="px-3 py-1 bg-white/50 text-gray-700 rounded-full text-sm font-medium group relative"
+                        >
+                          <span>{lang.language}</span>
+                          <span className="text-blue-600 ml-1">({lang.proficiency})</span>
+                          <div className="absolute hidden group-hover:block bg-black text-white text-xs rounded p-2 z-10 bottom-full mb-1 left-1/2 transform -translate-x-1/2 w-48">
+                            {proficiencyLevels.find(level => level.value === lang.proficiency)?.description}
+                          </div>
+                        </span>
+                      ))}
+                    </div>
+                    {renderError(validationErrors.languages, 'languages')}
                   </div>
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">

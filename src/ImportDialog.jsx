@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import { Dialog } from '@headlessui/react';
 import OpenAI from 'openai';
 import { CVParser } from './lib/parsers/cvParser';
-import { LinkedInClient } from './lib/linkedin/linkedinClient';
 import { useProfile } from './hooks/useProfile';
 
 import { chunkText, safeJSONParse, retryOperation } from './lib/utils/textProcessing';
@@ -78,17 +77,6 @@ function ImportDialog({ isOpen, onClose, onImport }) {
     }
   };
 
-  const handleLinkedInAuth = () => {
-    try {
-      setShowGuidance(false);
-      const linkedinClient = new LinkedInClient();
-      const authUrl = linkedinClient.getAuthUrl();
-      window.location.href = authUrl;
-    } catch (err) {
-      setError(`LinkedIn authentication failed: ${err.message}`);
-      console.error('LinkedIn auth error:', err);
-    }
-  };
 
   const generateSummary = async (data) => {
     const response = await openai.chat.completions.create({
@@ -373,58 +361,30 @@ function ImportDialog({ isOpen, onClose, onImport }) {
           languages: skills.languages || defaultArrays.languages
         },
         professionalSummary: {
-          yearsOfExperience: basicInfo.yearsOfExperience || '',
-          currentRole: basicInfo.currentRole || '',
+          yearsOfExperience: experience.yearsOfExperience || '',
+          currentRole: experience.currentRole || '',
           industries: experience.industries || defaultArrays.industries,
           keyExpertise: experience.keyAreas || defaultArrays.keyAreas,
           notableCompanies: experience.notableCompanies || defaultArrays.notableCompanies
         },
         skills: {
-          technical: (skills.technical || defaultArrays.technical).map(s => ({
-            skill: s.name,
-            level: s.confidence,
-            details: s.context
-          })),
-          professional: (skills.professional || defaultArrays.professional).map(s => ({
-            skill: s.name,
-            level: s.confidence,
-            details: s.context
-          })),
-          soft: (skills.soft || defaultArrays.soft).map(s => ({
-            skill: s.name,
-            level: s.confidence,
-            details: s.context
-          }))
+          technical: experience.technicalSkills || defaultArrays.technicalSkills,
+          professional: experience.professionalSkills || defaultArrays.professionalSkills,
+          soft: experience.softSkills || defaultArrays.softSkills
         },
-        achievements: (achievements.items || defaultArrays.items).map(a => ({
-          description: a.description || '',
-          impact: a.impact || '',
-          context: a.context || '',
-          skills: a.skills || []
-        })),
         experience: (experience.roles || defaultArrays.roles).map(role => {
-          // For startDate, always convert to Date
           const startDate = new Date(role.startDate);
+          let endDate = role.endDate === 'present' ? 'present' : new Date(role.endDate);
           
-          // For endDate, handle 'present' case specially
-          let endDate;
-          if (role.endDate === 'present') {
-            endDate = 'present';  // Keep as string for ongoing positions
-          } else {
-            // For past experiences, convert to Date
-            endDate = new Date(role.endDate);
-            
-            // Validate the date
-            if (isNaN(endDate.getTime())) {
-              throw new Error(`Invalid end date: ${role.endDate}`);
-            }
+          if (endDate !== 'present' && isNaN(endDate.getTime())) {
+            throw new Error(`Invalid end date: ${role.endDate}`);
           }
 
           return {
             title: role.title,
             company: role.company,
-            startDate,         // Will be automatically handled as ISODate by MongoDB
-            endDate,          // Will be either Date object or 'present' string
+            startDate,
+            endDate,
             responsibilities: role.responsibilities || [],
             achievements: role.achievements || []
           };
@@ -443,8 +403,6 @@ function ImportDialog({ isOpen, onClose, onImport }) {
       console.log('Data to store in DB : ', combinedData);
       const createdProfile = await createProfile(combinedData);
       onImport({ ...createdProfile, generatedSummary: summary });
-
-      //onImport({ ...combinedData, generatedSummary: summary });
 
       console.log("createdProfile : ", createdProfile);
       console.log("summary : ", summary);

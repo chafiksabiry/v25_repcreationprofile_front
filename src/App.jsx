@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ImportDialog from './ImportDialog';
 import SummaryEditor from './SummaryEditor';
-import LinkedInCallback from './LinkedInCallback';
-import RepsProfile from './components/REPSProfile'
 import { Navigate } from 'react-router-dom';
 import api from './lib/api/client';
 import Cookies from 'js-cookie';
+
 function App() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -16,8 +15,6 @@ function App() {
       languages: [],
       email: '',
       phone: '',
-      linkedin: '',
-      website: ''
     },
     professionalSummary: {
       yearsOfExperience: '',
@@ -81,8 +78,6 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/linkedin-callback" element={<LinkedInCallback />} />
-        <Route path="/reps-profile" element={<RepsProfile />} />
         <Route
           path="/profile-wizard"
           element={

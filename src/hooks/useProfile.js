@@ -61,11 +61,14 @@ export const useProfile = (profileId) => {
   const updateProfileData = async (id, profileData) => {
     try {
       setLoading(true);
+      console.log('Sending profile update:', { id, profileData });
       const updatedProfile = await profileApi.updateProfile(id, profileData);
+      console.log('Profile update response:', updatedProfile);
       setProfile(updatedProfile);
       setError(null);
       return updatedProfile;
     } catch (err) {
+      console.error('Profile update error:', err);
       setError(err.message);
       throw err;
     } finally {

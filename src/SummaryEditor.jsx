@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import AssessmentDialog from './components/AssessmentDialog';
 import { useProfile } from './hooks/useProfile';
 import openaiClient from './lib/ai/openaiClient';
 import { OpenAI } from 'openai';
@@ -131,17 +130,17 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       console.error('Location validation failed:', errors.location);
     }
 
-    // Validate email
+/*     // Validate email
     if (!editedProfile.professionalSummary.currentRole?.trim()) {
       errors.currentRole = 'Current role is required';
       console.error('Current role validation failed:', errors.currentRole);
-    }
+    } */
 
-    // Validate years of experience
+/*     // Validate years of experience
     if (!editedProfile.professionalSummary.yearsOfExperience?.trim()) {
       errors.yearsExperience = 'Years of experience is required';
       console.error('Years of experience validation failed:', errors.yearsExperience);
-    }
+    } */
 
     // Validate industries (at least one required)
     if (!editedProfile.professionalSummary.industries?.length) {
@@ -629,7 +628,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     console.log('validateProfile() result:', isValid);
     
     if (isValid) {
-      setShowAssessment(true);
+      // Redirect to external website
+      window.location.href = 'https://rep-dashboard.harx.ai/profile';
     } else {
       // Use setTimeout to ensure the DOM has updated with the error elements
       setTimeout(() => {
@@ -1804,7 +1804,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               onClick={pushToRepsProfile}
               className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors duration-200 flex items-center gap-2"
             >
-              <span>🚀 Confirm REPS Qualifications</span>
+              <span>🚀 View Your REPS Profile</span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
@@ -1812,14 +1812,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           </div>
         </div>
       </div>
-
-      <AssessmentDialog
-        isOpen={showAssessment}
-        onClose={() => setShowAssessment(false)}
-        languages={editedProfile.personalInfo.languages}
-        profileData={editedProfile}
-        onProfileUpdate={handleAssessmentUpdate}
-      />
 
       {/* Add Toast Component */}
       {toast.show && (

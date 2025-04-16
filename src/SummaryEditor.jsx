@@ -672,7 +672,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     
     if (isValid) {
       // Redirect to external website
-      window.location.href = 'https://rep-dashboard.harx.ai/profile';
+      window.location.href = 'http://localhost:5183/profile';
     } else {
       // Update validation errors state
       setValidationErrors(errors);

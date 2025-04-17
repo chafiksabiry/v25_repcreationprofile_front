@@ -1,8 +1,11 @@
 import api from './client';
 
-export const getProfile = async () => {
+export const getProfile = async (userId) => {
   try {
-    const { data } = await api.get('/profiles');
+    // If userId is provided, use it to fetch a specific profile
+    // Otherwise, use the general endpoint (which might use the authenticated user's ID)
+    const endpoint = userId ? `/profiles/${userId}` : '/profiles';
+    const { data } = await api.get(endpoint);
     return data;
   } catch (error) {
     throw error.response?.data || error;

@@ -1,32 +1,66 @@
 import { useState, useEffect } from 'react';
 import * as profileApi from '../lib/api/profiles';
+import Cookies from 'js-cookie';
 
 export const useProfile = (profileId) => {
   const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [fetchedUserId, setFetchedUserId] = useState(null);
+
+  const getUserIdFromCookie = () => {
+    return Cookies.get('userId');
+  };
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        const data = await profileApi.getProfile(profileId);
-        setProfile(data);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching profile:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (profileId) {
+    if (profileId && profileId !== fetchedUserId) {
+      const fetchProfile = async () => {
+        try {
+          setLoading(true);
+          const data = await profileApi.getProfile(profileId);
+          setProfile(data);
+          setFetchedUserId(profileId);
+          setError(null);
+        } catch (err) {
+          console.error('Error fetching profile:', err);
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
       fetchProfile();
-    } else {
+    }
+  }, [profileId, fetchedUserId]);
+
+  const getProfile = async (specificUserId) => {
+    try {
+      if (!profile) setLoading(true);
+      
+      const userId = specificUserId || getUserIdFromCookie();
+      
+      if (!userId) {
+        console.error('No user ID available for fetching profile');
+        return null;
+      }
+      
+      const data = await profileApi.getProfile(userId);
+      
+      if (data) {
+        setProfile(data);
+        setFetchedUserId(userId);
+        setError(null);
+      }
+      
+      return data;
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setError(err.message);
+      return null;
+    } finally {
       setLoading(false);
     }
-  }, [profileId]);
+  };
 
   const createProfile = async (profileData) => {
     try {
@@ -155,11 +189,9 @@ export const useProfile = (profileId) => {
     }
   };
 
-  // Add new function to the hook
   const addContactCenterAssessment = async (id, assessment) => {
     try {
       setLoading(true);
-      // Send the assessment data directly since it's already in the correct format
       const updatedProfile = await profileApi.addContactCenterAssessment(id, assessment);
       setProfile(updatedProfile);
       setError(null);
@@ -176,6 +208,7 @@ export const useProfile = (profileId) => {
     profile,
     loading,
     error,
+    getProfile,
     createProfile,
     updateBasicInfo,
     updateExperience,

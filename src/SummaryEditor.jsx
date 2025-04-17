@@ -671,8 +671,17 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     console.log('validateProfile() result:', isValid);
     
     if (isValid) {
-      // Redirect to external website
-      window.location.href = 'http://localhost:5183/profile';
+      // Update the isBasicProfileCompleted field to true
+      updateProfileData(editedProfile._id, { isBasicProfileCompleted: true })
+        .then(() => {
+          // Redirect to external website after successful update
+          window.location.href = 'http://localhost:5183/profile';
+        })
+        .catch(error => {
+          console.error('Error updating isBasicProfileCompleted:', error);
+          // Redirect anyway even if the update fails
+          window.location.href = 'http://localhost:5183/profile';
+        });
     } else {
       // Update validation errors state
       setValidationErrors(errors);

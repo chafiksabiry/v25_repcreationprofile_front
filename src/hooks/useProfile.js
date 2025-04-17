@@ -8,48 +8,48 @@ export const useProfile = (profileId) => {
   const [error, setError] = useState(null);
   const [fetchedUserId, setFetchedUserId] = useState(null);
 
+  // Helper to get userId from cookie
   const getUserIdFromCookie = () => {
     return Cookies.get('userId');
   };
 
-  useEffect(() => {
-    if (profileId && profileId !== fetchedUserId) {
-      const fetchProfile = async () => {
-        try {
-          setLoading(true);
-          const data = await profileApi.getProfile(profileId);
-          setProfile(data);
-          setFetchedUserId(profileId);
-          setError(null);
-        } catch (err) {
-          console.error('Error fetching profile:', err);
-          setError(err.message);
-        } finally {
-          setLoading(false);
-        }
-      };
-      
-      fetchProfile();
-    }
-  }, [profileId, fetchedUserId]);
+  // Helper to check token existence
+  const hasToken = () => {
+    return !!localStorage.getItem('token');
+  };
 
-  const getProfile = async (specificUserId) => {
+  // The main function to fetch a profile - can be used both inside the hook and exported
+  const fetchProfile = async (userId) => {
+    // Skip if no userId is provided or no token is available
+    if (!userId || !hasToken()) {
+      console.error(`Cannot fetch profile: ${!userId ? 'No user ID provided' : 'No authentication token available'}`);
+      return null;
+    }
+    
+    // If we've already fetched this profile and it matches the requested userId, return the cached profile
+    if (profile && fetchedUserId === userId) {
+      console.log(`Using cached profile for user ${userId}`);
+      return profile;
+    }
+    
     try {
-      if (!profile) setLoading(true);
+      setLoading(true);
       
-      const userId = specificUserId || getUserIdFromCookie();
-      
-      if (!userId) {
-        console.error('No user ID available for fetching profile');
-        return null;
+      // Log the fetch attempt with token info
+      if (hasToken()) {
+        const token = localStorage.getItem('token');
+        console.log(`Fetching profile for user ${userId} with token: ${token.substring(0, 10)}...`);
       }
       
       const data = await profileApi.getProfile(userId);
       
       if (data) {
+        console.log('Profile data successfully fetched:', data._id);
         setProfile(data);
         setFetchedUserId(userId);
         setError(null);
+      } else {
+        console.log('No profile data returned from API');
       }
       
       return data;
@@ -60,6 +60,22 @@ export const useProfile = (profileId) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Auto-fetch profile if profileId is provided to the hook
+  useEffect(() => {
+    // Only fetch if profileId is provided, different from the last fetched ID, and we have a token
+    if (profileId && profileId !== fetchedUserId && hasToken()) {
+      console.log(`Auto-fetching profile for ID: ${profileId}`);
+      fetchProfile(profileId);
+    }
+  }, [profileId, fetchedUserId]);
+
+  // Public getProfile function - this is what components will call
+  const getProfile = async (specificUserId) => {
+    // If no specific userId provided, try to get it from the cookie
+    const userId = specificUserId || getUserIdFromCookie();
+    return fetchProfile(userId);
   };
 
   const createProfile = async (profileData) => {

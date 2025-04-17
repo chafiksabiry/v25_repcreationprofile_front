@@ -3,11 +3,12 @@ import api from './client';
 export const getProfile = async (userId) => {
   try {
     // If userId is provided, use it to fetch a specific profile
-    // Otherwise, use the general endpoint (which might use the authenticated user's ID)
     const endpoint = userId ? `/profiles/${userId}` : '/profiles';
+    console.log(`Making API request to: ${endpoint}`);
     const { data } = await api.get(endpoint);
     return data;
   } catch (error) {
+    console.error(`Error fetching profile${userId ? ` for user ${userId}` : ''}:`, error);
     throw error.response?.data || error;
   }
 };
@@ -91,5 +92,18 @@ export const addContactCenterAssessment = async (id, assessment) => {
     return data;
   } catch (error) {
     throw error.response?.data || error;
+  }
+};
+
+// Add checkProfileExists function
+export const checkProfileExists = async (userId) => {
+  try {
+    const endpoint = userId ? `/profiles/${userId}/exists` : '/profiles/exists';
+    console.log(`Checking if profile exists: ${endpoint}`);
+    const { data } = await api.get(endpoint);
+    return data.exists;
+  } catch (error) {
+    console.error(`Error checking profile existence${userId ? ` for user ${userId}` : ''}:`, error);
+    return false;
   }
 };

@@ -18,120 +18,114 @@ const Loading = () => (
 
 // Profile router component to handle conditional routing based on profile status
 function ProfileRouter() {
-  const [loading, setLoading] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [profileData, setProfileData] = useState(null);
   const [generatedSummary, setGeneratedSummary] = useState('');
   const [isImportOpen, setIsImportOpen] = useState(false);
-  const { getProfile } = useProfile();
+  const { getProfile, loading: profileLoading } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
-  const initialFetchDone = useRef(false);
   const userId = Cookies.get('userId');
+  const hasNavigated = useRef(false); // Ref to track if navigation has occurred
+  const initAttempted = useRef(false); // Ref to track if initialization was attempted
   
-  // Handle authentication token once, on component mount
+  // Initialize authentication and fetch profile - only runs once
   useEffect(() => {
-    const initializeToken = async () => {
-      try {
-        if (!userId) {
-          console.error("No user ID found in cookies");
-          return;
-        }
-        
-        console.log("Using user ID from cookie:", userId);
-        
-        // Only generate token if not already present
-        if (!localStorage.getItem('token')) {
-          const { data } = await api.post('/auth/generate-token', { userId });
-          
-          if (data?.token) {
-            localStorage.setItem('token', data.token);
-            console.log("Token generated and stored");
-          }
-        } else {
-          console.log("Token already exists");
-        }
-      } catch (error) {
-        console.error('Failed to initialize token:', error.message);
-      }
-    };
+    // Prevent multiple initialization attempts
+    if (initAttempted.current) return;
+    initAttempted.current = true;
     
-    initializeToken();
-  }, [userId]);
-  
-  // Fetch profile only once on initial load
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      // Skip if we've already fetched or no userId is available
-      if (initialFetchDone.current || !userId) return;
+    const initialize = async () => {
+      if (!userId) {
+        console.error("No user ID found in cookies");
+        setIsInitializing(false);
+        return;
+      }
       
       try {
-        console.log("Fetching user profile for userId:", userId);
-        setLoading(true);
-        const data = await getProfile(userId);
-        initialFetchDone.current = true;
+        console.log("Starting initialization for user:", userId);
         
-        console.log("Profile data fetched:", data);
-        
-        if (data) {
-          setProfileData(data);
+        // Step 1: Generate and store token
+        const tokenResponse = await api.post('/auth/generate-token', { userId });
+        if (tokenResponse?.data?.token) {
+          localStorage.setItem('token', tokenResponse.data.token);
+          console.log("Token generated and stored successfully");
           
-          // Check profile status and redirect accordingly - but only if location needs to change
-          if (data.isBasicProfileCompleted) {
-            // If profile is complete, redirect to dashboard
-            console.log("Profile complete, redirecting to dashboard");
-            window.location.href = 'http://localhost:5183/profile';
-            return;
-          } else if (data.personalInfo?.name && location.pathname !== '/profile-editor') {
-            // If profile exists but not complete, go to editor
-            console.log("Profile exists but incomplete, navigating to editor");
-            navigate('/profile-editor');
-          } else if (!data.personalInfo?.name && location.pathname !== '/profile-import') {
-            // New user, go to import page
-            console.log("New profile, navigating to import page");
-            navigate('/profile-import');
+          // Step 2: Now that we have a token, fetch the profile
+          const profileData = await getProfile(userId);
+          console.log("Profile fetched:", profileData ? "Success" : "Not found");
+          
+          // Set the profile data regardless of navigation
+          if (profileData) {
+            setProfileData(profileData);
+          }
+          
+          // Step 3: Route to the appropriate page based on profile status - but only once
+          if (!hasNavigated.current) {
+            hasNavigated.current = true; // Mark that we've navigated
+            
+            if (profileData?.isBasicProfileCompleted) {
+              // User has completed their profile - redirect to dashboard
+              console.log("Profile complete, redirecting to dashboard");
+              window.location.href = 'http://localhost:5183/profile';
+              return; // Exit early to prevent further state updates
+            } else if (profileData?.personalInfo?.name) {
+              // Profile exists but incomplete - go to editor if not already there
+              if (location.pathname !== '/profile-editor') {
+                console.log("Profile exists but incomplete, navigating to editor");
+                navigate('/profile-editor');
+              }
+            } else {
+              // New profile or minimal data - go to import if not already there
+              if (location.pathname !== '/profile-import') {
+                console.log("New profile, navigating to import page");
+                navigate('/profile-import');
+              }
+            }
           } else {
-            console.log("User is already on the correct page");
+            console.log("Navigation already happened, skipping route change");
           }
         } else {
-          // No profile found, go to import page
-          if (location.pathname !== '/profile-import') {
-            console.log("No profile found, navigating to import page");
-            navigate('/profile-import');
-          }
+          console.error("Failed to obtain token");
         }
       } catch (error) {
-        console.error('Error fetching profile:', error);
-        // On error, default to import page if not already there
-        if (location.pathname !== '/profile-import') {
-          navigate('/profile-import');
-        }
+        console.error('Initialization error:', error);
       } finally {
-        setLoading(false);
+        setIsInitializing(false);
       }
     };
     
-    fetchUserProfile();
-  }, [navigate, getProfile, location.pathname, userId]);
+    initialize();
+    // Only depend on userId - explicitly avoid adding navigate, location, getProfile as dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
   
+  // Reset navigation flag when location changes
+  useEffect(() => {
+    console.log("Location changed to:", location.pathname);
+    // We don't reset hasNavigated.current here anymore, as we want it to stay true once navigation happens
+  }, [location]);
+  
+  // Handle profile data updates from import dialog
   const handleProfileData = (data) => {
     const { generatedSummary, ...profileInfo } = data;
     setProfileData(profileInfo);
     setGeneratedSummary(generatedSummary || '');
     
     // After importing/creating profile, go to editor
+    hasNavigated.current = true; // Mark that we're navigating
     navigate('/profile-editor');
   };
 
-  // Avoid showing loading indicator if we already have profile data
-  // This prevents flashing of loading state during navigation between pages
-  if (loading && !profileData) {
+  // Show loading during initialization
+  if (isInitializing) {
     return <Loading />;
   }
   
-  // Return the appropriate route component based on current URL
+  // Render the appropriate page based on current route
   const currentPath = location.pathname;
   
-  // Only used for the "/profile-import" route
+  // Import page
   if (currentPath === '/profile-import') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -195,8 +189,13 @@ function ProfileRouter() {
     );
   }
   
-  // Only used for the "/profile-editor" route
+  // Editor page
   if (currentPath === '/profile-editor') {
+    // Show loading if we're on the editor page but don't have profile data yet
+    if (profileLoading && !profileData) {
+      return <Loading />;
+    }
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">

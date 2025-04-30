@@ -25,7 +25,7 @@ function ProfileRouter() {
   const { getProfile, loading: profileLoading } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
-  const userId = Cookies.get('userId');
+  let userId = null;
   const hasNavigated = useRef(false); // Ref to track if navigation has occurred
   const initAttempted = useRef(false); // Ref to track if initialization was attempted
   
@@ -36,13 +36,23 @@ function ProfileRouter() {
     initAttempted.current = true;
     
     const initialize = async () => {
-      if (!userId) {
-        console.error("No user ID found in cookies");
-        setIsInitializing(false);
-        return;
-      }
-      
       try {
+        // If running in standalone mode, use the user ID from the environment variable
+        if (import.meta.env.VITE_RUN_MODE === 'standalone') {
+          userId = import.meta.env.VITE_STANDALONE_USER_ID;
+        } else {
+          // If running in in-app mode, try to get the user ID from cookies
+          const cookieUserId = Cookies.get('userId');
+          if (cookieUserId) {
+            console.log("userId from cookies:", cookieUserId);
+            userId = cookieUserId;
+          } else {
+            console.error("No user ID found in cookies");
+            setIsInitializing(false);
+            return;
+          }
+        }
+        
         console.log("Starting initialization for user:", userId);
         
         // Step 1: Generate and store token
@@ -98,7 +108,7 @@ function ProfileRouter() {
     initialize();
     // Only depend on userId - explicitly avoid adding navigate, location, getProfile as dependencies
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, []);
   
   // Reset navigation flag when location changes
   useEffect(() => {

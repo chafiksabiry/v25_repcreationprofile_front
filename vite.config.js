@@ -37,7 +37,13 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5177,
       cors: true,
-      hmr: false,
+      hmr: {
+        // Enable Hot Module Replacement for real-time updates during development
+        // When true, allows components and modules to be updated without a full page refresh
+        enabled: true,
+        // You can also configure specific HMR options like:
+        // host, port, protocol if needed
+      },
       fs: {
         strict: true, // Ensure static assets are correctly resolved
       },

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useProfile } from './hooks/useProfile';
 import openaiClient from './lib/ai/openaiClient';
 import { OpenAI } from 'openai';
+import { getLanguageCodeFromAI } from './lib/utils/textProcessing';
 
 // Add CSS styles for error highlighting
 const styles = `
@@ -489,9 +490,30 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       return;
     }
     try {
+      // Get the OpenAI API key from environment variables
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      if (!apiKey) {
+        throw new Error('OpenAI API key is required');
+      }
+
+      // Create OpenAI client
+      const openai = new OpenAI({
+        apiKey: apiKey,
+        dangerouslyAllowBrowser: true
+      });
+
+      // Get language code using AI
+      const iso639_1 = await getLanguageCodeFromAI(tempLanguage.language, openai);
+      
+      // Add language with ISO code
+      const languageWithCode = {
+        ...tempLanguage,
+        iso639_1: iso639_1
+      };
+      
       const updatedLanguages = [
         ...editedProfile.personalInfo.languages,
-        { ...tempLanguage }
+        languageWithCode
       ];
 
       await updateBasicInfo(editedProfile._id, {
@@ -1425,7 +1447,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                       {editedProfile.personalInfo.languages.map((lang, index) => (
                         <div key={index} className="flex items-center gap-3 bg-white/50 px-4 py-2 rounded-full group relative hover:bg-white transition-colors duration-200">
                           <span className="text-sm font-medium text-gray-700">
-                            {lang.language}
+                            {lang.language} {lang.iso639_1 && <span className="text-xs text-gray-500">({lang.iso639_1})</span>}
                           </span>
                           <div className="h-4 w-px bg-gray-300"></div>
                           <div className="relative inline-block min-w-[80px]">
@@ -1606,6 +1628,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                         >
                           <span>{lang.language}</span>
                           <span className="text-blue-600 ml-1">({lang.proficiency})</span>
+                          {lang.iso639_1 && <span className="text-gray-500 text-xs ml-1">[{lang.iso639_1}]</span>}
                           <div className="absolute hidden group-hover:block bg-black text-white text-xs rounded p-2 z-10 bottom-full mb-1 left-1/2 transform -translate-x-1/2 w-48">
                             {proficiencyLevels.find(level => level.value === lang.proficiency)?.description}
                           </div>

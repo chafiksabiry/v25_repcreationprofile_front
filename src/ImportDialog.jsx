@@ -268,6 +268,7 @@ function ImportDialog({ isOpen, onClose, onImport }) {
             7. When in doubt between two levels, consider the overall context of language use
             8. Default to B1 only if there's significant uncertainty and no contextual clues
             9. If a language is mentioned but there are absolutely no clues about proficiency level, default to A1
+            10. For each language, determine the ISO 639-1 two-letter language code (e.g., "en" for English, "fr" for French, "zh" for Chinese)
 
             Return in this exact JSON format:
             {
@@ -288,7 +289,8 @@ function ImportDialog({ isOpen, onClose, onImport }) {
               }],
               "languages": [{
                 "language": "string",
-                "proficiency": "string (MUST be one of: A1, A2, B1, B2, C1, C2)"
+                "proficiency": "string (MUST be one of: A1, A2, B1, B2, C1, C2)",
+                "iso639_1": "string (two-letter ISO 639-1 language code)"
               }]
             }`
           },
@@ -306,6 +308,8 @@ function ImportDialog({ isOpen, onClose, onImport }) {
       if (skills.languages.length === 0) {
         throw new Error('Languages section is required to generate your profile. Please ensure your CV includes the languages you speak.');
       }
+      
+      // No need to get ISO codes separately, they're already included in the response
       addAnalysisStep("Skills categorized");
       setProgress(60);
 

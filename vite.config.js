@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => {
       react({
         jsxRuntime: 'classic',
       }),
-      qiankun('app3', {
+      qiankun('repcreationprofile', {
         useDevMode: true,
       }),
       removeReactRefreshScript(), // Add the script removal plugin
@@ -35,7 +35,7 @@ export default defineConfig(({ mode }) => {
       'import.meta.env': env,
     },
     server: {
-      port: 5177,
+      port: 5174,
       cors: true,
       hmr: {
         // Enable Hot Module Replacement for real-time updates during development
@@ -54,7 +54,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           format: 'umd',
-          name: 'app3',
+          name: 'repcreationprofile',
           entryFileNames: 'index.js', // Fixed name for the JS entry file
           chunkFileNames: 'chunk-[name].js', // Fixed name for chunks
           assetFileNames: (assetInfo) => {

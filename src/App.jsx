@@ -77,7 +77,7 @@ function ProfileRouter() {
             if (profileData?.isBasicProfileCompleted) {
               // User has completed their profile - redirect to dashboard
               console.log("Profile complete, redirecting to dashboard");
-              window.location.href = 'http://localhost:5183/profile';
+              window.location.href = import.meta.env.VITE_REP_PROFILE_URL;
               return; // Exit early to prevent further state updates
             } else if (profileData?.personalInfo?.name) {
               // Profile exists but incomplete - go to editor if not already there

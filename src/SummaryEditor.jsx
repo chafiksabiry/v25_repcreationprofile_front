@@ -697,12 +697,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       updateProfileData(editedProfile._id, { isBasicProfileCompleted: true })
         .then(() => {
           // Redirect to external website after successful update
-          window.location.href = 'http://localhost:5183/profile';
+          window.location.href = import.meta.env.VITE_REP_PROFILE_URL;
         })
         .catch(error => {
           console.error('Error updating isBasicProfileCompleted:', error);
           // Redirect anyway even if the update fails
-          window.location.href = 'http://localhost:5183/profile';
+          window.location.href = import.meta.env.VITE_REP_PROFILE_URL;
         });
     } else {
       // Update validation errors state

@@ -77,7 +77,10 @@ function ProfileRouter() {
             if (profileData?.isBasicProfileCompleted) {
               // User has completed their profile - redirect to dashboard
               console.log("Profile complete, redirecting to dashboard");
-              window.location.href = import.meta.env.VITE_REP_PROFILE_URL;
+              const profileUrl = import.meta.env.VITE_RUN_MODE === 'standalone' 
+                ? import.meta.env.VITE_REP_PROFILE_URL_STANDALONE 
+                : import.meta.env.VITE_REP_PROFILE_URL;
+              window.location.href = profileUrl;
               return; // Exit early to prevent further state updates
             } else if (profileData?.personalInfo?.name) {
               // Profile exists but incomplete - go to editor if not already there

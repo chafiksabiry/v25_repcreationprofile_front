@@ -75,19 +75,19 @@ function ProfileRouter() {
             hasNavigated.current = true; // Mark that we've navigated
             
             // In standalone mode, always navigate to profile-import
-            if (import.meta.env.VITE_RUN_MODE === 'standalone') {
+            /* if (import.meta.env.VITE_RUN_MODE === 'standalone') {
               console.log("Standalone mode: redirecting to profile import");
               if (location.pathname !== '/profile-import') {
                 navigate('/profile-import');
               }
-            } else {
+            } else { */
               // Normal navigation rules for non-standalone mode
               if (profileData?.isBasicProfileCompleted) {
                 // User has completed their profile - redirect to dashboard
                 console.log("Profile complete, redirecting to dashboard");
                 const profileUrl = import.meta.env.VITE_RUN_MODE === 'standalone' 
-                  ? import.meta.env.VITE_REP_PROFILE_URL_STANDALONE 
-                  : import.meta.env.VITE_REP_PROFILE_URL;
+                  ? import.meta.env.VITE_REP_ORCHESTRATOR_URL_STANDALONE 
+                  : import.meta.env.VITE_REP_ORCHESTRATOR_URL;
                 window.location.href = profileUrl;
                 return; // Exit early to prevent further state updates
               } else if (profileData?.personalInfo?.name) {
@@ -103,7 +103,7 @@ function ProfileRouter() {
                   navigate('/profile-import');
                 }
               }
-            }
+            //}
           } else {
             console.log("Navigation already happened, skipping route change");
           }

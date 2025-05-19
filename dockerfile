@@ -9,10 +9,10 @@ COPY package*.json ./
 
 ENV VITE_API_URL=https://api-repcreationwizard.harx.ai/api
 ENV VITE_OPENAI_API_KEY=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
-ENV VITE_REP_ORCHESTRATOR_URL=/repdashboard/profile
-ENV VITE_REP_ORCHESTRATOR_URL_STANDALONE=https://rep-dashboard.harx.ai/profile
-#ENV VITE_RUN_MODE=in-app
-ENV VITE_RUN_MODE=standalone
+ENV VITE_REP_ORCHESTRATOR_URL=/reporchestrator
+ENV VITE_REP_ORCHESTRATOR_URL_STANDALONE=https://rep-orchestrator.harx.ai/
+ENV VITE_RUN_MODE=in-app
+#ENV VITE_RUN_MODE=standalone
 ENV VITE_STANDALONE_USER_ID=681e2d9b4d60b1ff380960f0
 #user id for standalone mode 
 ENV VITE_STANDALONE_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODFlMmQ5YjRkNjBiMWZmMzgwOTYwZjAiLCJpYXQiOjE3NDY4MDgzODB9.aIKpQumOPHJekxzSgDkB1r0ax5BAUE_QErs_chL5-mg

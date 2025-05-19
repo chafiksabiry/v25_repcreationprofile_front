@@ -698,16 +698,16 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         .then(() => {
           // Redirect to external website after successful update
           const profileUrl = import.meta.env.VITE_RUN_MODE === 'standalone' 
-            ? import.meta.env.VITE_REP_PROFILE_URL_STANDALONE 
-            : import.meta.env.VITE_REP_PROFILE_URL;
+            ? import.meta.env.VITE_REP_ORCHESTRATOR_URL_STANDALONE 
+            : import.meta.env.VITE_REP_ORCHESTRATOR_URL;
           window.location.href = profileUrl;
         })
         .catch(error => {
           console.error('Error updating isBasicProfileCompleted:', error);
           // Redirect anyway even if the update fails
           const profileUrl = import.meta.env.VITE_RUN_MODE === 'standalone' 
-            ? import.meta.env.VITE_REP_PROFILE_URL_STANDALONE 
-            : import.meta.env.VITE_REP_PROFILE_URL;
+            ? import.meta.env.VITE_REP_ORCHESTRATOR_URL_STANDALONE 
+            : import.meta.env.VITE_REP_ORCHESTRATOR_URL;
           window.location.href = profileUrl;
         });
     } else {

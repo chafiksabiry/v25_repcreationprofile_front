@@ -262,7 +262,7 @@ function ProfileRouter() {
 
 function App() {
   return (
-    <Router>
+    <Router basename={import.meta.env.VITE_RUN_MODE === 'standalone' ? '/' : '/repcreationprofile'}>
       <Routes>
         {/* Old route preserved for compatibility */}
         <Route path="/profile-wizard" element={<Navigate to="/profile-import" replace />} />

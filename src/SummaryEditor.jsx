@@ -1682,15 +1682,14 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
             
             {editingProfile ? (
               <div className="space-y-6">
-                {/* Working Hours Template */}
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <h4 className="text-sm font-medium text-gray-700 mb-4">Set Working Hours Template</h4>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">Start Time</label>
+                {/* Simple Working Hours and Days Selector */}
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Default Working Hours</label>
+                    <div className="flex items-center gap-4 max-w-md">
                       <input
                         type="time"
-                        value={editedProfile.availability?.tempHours?.start || ''}
+                        value={editedProfile.availability?.tempHours?.start || '09:00'}
                         onChange={(e) => {
                           const newTime = e.target.value;
                           setEditedProfile(prev => ({
@@ -1704,14 +1703,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                             }
                           }));
                         }}
-                        className="w-full p-2 border rounded-md"
+                        className="w-32 p-2 border rounded"
                       />
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">End Time</label>
+                      <span className="text-gray-500">to</span>
                       <input
                         type="time"
-                        value={editedProfile.availability?.tempHours?.end || ''}
+                        value={editedProfile.availability?.tempHours?.end || '17:00'}
                         onChange={(e) => {
                           const newTime = e.target.value;
                           setEditedProfile(prev => ({
@@ -1725,34 +1722,50 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                             }
                           }));
                         }}
-                        className="w-full p-2 border rounded-md"
+                        className="w-32 p-2 border rounded"
                       />
+                      <button
+                        onClick={() => {
+                          const defaultStart = editedProfile.availability?.tempHours?.start || '09:00';
+                          const defaultEnd = editedProfile.availability?.tempHours?.end || '17:00';
+                          const currentSchedule = editedProfile.availability?.schedule || [];
+                          const newSchedule = currentSchedule.map(day => ({
+                            ...day,
+                            hours: { start: defaultStart, end: defaultEnd }
+                          }));
+                          handleAvailabilityChange('schedule', newSchedule);
+                        }}
+                        className="px-4 py-2 text-sm text-blue-600 bg-blue-50 rounded hover:bg-blue-100"
+                      >
+                        Apply to Selected Days
+                      </button>
                     </div>
                   </div>
-                </div>
 
-                {/* Working Days with Hours */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Working Schedule</label>
-                  <div className="space-y-2">
-                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
-                      const daySchedule = editedProfile.availability?.schedule?.find(s => s.day === day);
-                      return (
-                        <div key={day} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                          <div className="w-32">
-                            <label className="inline-flex items-center">
-                              <input
-                                type="checkbox"
-                                checked={!!daySchedule}
-                                onChange={() => {
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Working Days</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
+                        const daySchedule = editedProfile.availability?.schedule?.find(s => s.day === day);
+                        return (
+                          <div
+                            key={day}
+                            className={`p-3 rounded border ${
+                              daySchedule 
+                                ? 'border-blue-200 bg-blue-50' 
+                                : 'border-gray-200 bg-white hover:border-blue-200'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium">{day}</span>
+                              <button
+                                onClick={() => {
                                   const currentSchedule = editedProfile.availability?.schedule || [];
                                   let newSchedule;
                                   
                                   if (daySchedule) {
-                                    // Remove day if already exists
                                     newSchedule = currentSchedule.filter(s => s.day !== day);
                                   } else {
-                                    // Add new day with template hours
                                     newSchedule = [
                                       ...currentSchedule,
                                       {
@@ -1764,17 +1777,19 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                       }
                                     ];
                                   }
-                                  
                                   handleAvailabilityChange('schedule', newSchedule);
                                 }}
-                                className="rounded border-gray-300 text-blue-600 mr-2"
-                              />
-                              <span className="text-sm font-medium text-gray-700">{day}</span>
-                            </label>
-                          </div>
-                          {daySchedule && (
-                            <div className="flex-1 flex items-center gap-4">
-                              <div className="flex-1">
+                                className={`px-3 py-1 rounded text-sm ${
+                                  daySchedule 
+                                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                              >
+                                {daySchedule ? 'Remove' : 'Add'}
+                              </button>
+                            </div>
+                            {daySchedule && (
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <input
                                   type="time"
                                   value={daySchedule.hours.start}
@@ -1787,11 +1802,9 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                     );
                                     handleAvailabilityChange('schedule', newSchedule);
                                   }}
-                                  className="w-full p-2 border rounded-md"
+                                  className="flex-1 p-1 border rounded bg-white"
                                 />
-                              </div>
-                              <span className="text-gray-500">to</span>
-                              <div className="flex-1">
+                                <span>-</span>
                                 <input
                                   type="time"
                                   value={daySchedule.hours.end}
@@ -1804,14 +1817,14 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                     );
                                     handleAvailabilityChange('schedule', newSchedule);
                                   }}
-                                  className="w-full p-2 border rounded-md"
+                                  className="flex-1 p-1 border rounded bg-white"
                                 />
                               </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
@@ -1821,9 +1834,9 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   <select
                     value={editedProfile.availability?.timeZone || ''}
                     onChange={(e) => handleAvailabilityChange('timeZone', e.target.value)}
-                    className="w-full p-2 border rounded-md bg-white"
+                    className="w-full max-w-md p-2 border rounded bg-white"
                   >
-                    <option value="">Select a time zone</option>
+                    <option value="">Select your time zone</option>
                     {[
                       'America/New_York (EST/EDT)',
                       'America/Chicago (CST/CDT)',
@@ -1836,9 +1849,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                       'Asia/Tokyo (JST)',
                       'Australia/Sydney (AEST/AEDT)'
                     ].map((zone) => (
-                      <option key={zone} value={zone}>
-                        {zone}
-                      </option>
+                      <option key={zone} value={zone}>{zone}</option>
                     ))}
                   </select>
                 </div>
@@ -1846,16 +1857,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 {/* Schedule Flexibility */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Schedule Flexibility</label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {[
                       'Remote Work Available',
                       'Flexible Hours',
-                      'Weekend Rotation',
-                      'Night Shift Available',
-                      'Split Shifts',
                       'Part-Time Options',
-                      'Compressed Work Week',
-                      'Shift Swapping Allowed'
+                      'Weekend Rotation'
                     ].map((option) => (
                       <button
                         key={option}
@@ -1866,10 +1873,10 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                             : [...currentFlexibility, option];
                           handleAvailabilityChange('flexibility', updatedFlexibility);
                         }}
-                        className={`p-2 rounded-lg text-sm font-medium text-left transition-colors duration-200 ${
+                        className={`px-4 py-2 rounded text-sm ${
                           editedProfile.availability?.flexibility?.includes(option)
                             ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                       >
                         {option}
@@ -1885,9 +1892,9 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Working Schedule</h4>
                   <div className="space-y-2">
                     {editedProfile.availability?.schedule?.map((schedule) => (
-                      <div key={schedule.day} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                        <span className="font-medium text-blue-700">{schedule.day}</span>
-                        <span className="text-blue-600">
+                      <div key={schedule.day} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                        <span className="font-medium">{schedule.day}</span>
+                        <span className="text-gray-600">
                           {schedule.hours.start} - {schedule.hours.end}
                         </span>
                       </div>
@@ -1898,7 +1905,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 {/* Time Zone Display */}
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Time Zone</h4>
-                  <p className="text-lg font-semibold text-gray-800">
+                  <p className="text-gray-800">
                     {editedProfile.availability?.timeZone || 'Not specified'}
                   </p>
                 </div>
@@ -1910,7 +1917,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     {editedProfile.availability?.flexibility?.map((option) => (
                       <span
                         key={option}
-                        className="px-4 py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium"
+                        className="px-4 py-2 bg-gray-50 text-gray-700 rounded"
                       >
                         {option}
                       </span>

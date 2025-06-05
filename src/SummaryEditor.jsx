@@ -1868,8 +1868,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     {[
                       'Remote Work Available',
                       'Flexible Hours',
+                      'Weekend Rotation',
+                      'Night Shift Available',
+                      'Split Shifts',
                       'Part-Time Options',
-                      'Weekend Rotation'
+                      'Compressed Work Week',
+                      'Shift Swapping Allowed'
                     ].map((option) => (
                       <button
                         key={option}

@@ -1352,10 +1352,21 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
   const handleAvailabilityChange = async (field, value) => {
     try {
-      const updatedAvailability = {
-        ...editedProfile.availability,
-        [field]: value
-      };
+      let updatedAvailability;
+      
+      if (field === 'schedule') {
+        // Handle schedule updates
+        updatedAvailability = {
+          ...editedProfile.availability,
+          schedule: value
+        };
+      } else if (field === 'timeZone' || field === 'flexibility') {
+        // Handle single field updates
+        updatedAvailability = {
+          ...editedProfile.availability,
+          [field]: value
+        };
+      }
 
       await updateProfileData(editedProfile._id, {
         availability: updatedAvailability
@@ -1671,45 +1682,28 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
             
             {editingProfile ? (
               <div className="space-y-6">
-                {/* Working Days */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Working Days</label>
-                  <div className="flex flex-wrap gap-2">
-                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
-                      <button
-                        key={day}
-                        onClick={() => {
-                          const currentDays = editedProfile.availability?.days || [];
-                          const updatedDays = currentDays.includes(day)
-                            ? currentDays.filter(d => d !== day)
-                            : [...currentDays, day];
-                          handleAvailabilityChange('days', updatedDays);
-                        }}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                          editedProfile.availability?.days?.includes(day)
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                      >
-                        {day}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Working Hours */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Working Hours</label>
+                {/* Working Hours Template */}
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-700 mb-4">Set Working Hours Template</h4>
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
                       <label className="block text-xs text-gray-500 mb-1">Start Time</label>
                       <input
                         type="time"
-                        value={editedProfile.availability?.hours?.start || ''}
-                        onChange={(e) => handleAvailabilityChange('hours', {
-                          ...editedProfile.availability?.hours,
-                          start: e.target.value
-                        })}
+                        value={editedProfile.availability?.tempHours?.start || ''}
+                        onChange={(e) => {
+                          const newTime = e.target.value;
+                          setEditedProfile(prev => ({
+                            ...prev,
+                            availability: {
+                              ...prev.availability,
+                              tempHours: {
+                                ...prev.availability?.tempHours,
+                                start: newTime
+                              }
+                            }
+                          }));
+                        }}
                         className="w-full p-2 border rounded-md"
                       />
                     </div>
@@ -1717,52 +1711,136 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                       <label className="block text-xs text-gray-500 mb-1">End Time</label>
                       <input
                         type="time"
-                        value={editedProfile.availability?.hours?.end || ''}
-                        onChange={(e) => handleAvailabilityChange('hours', {
-                          ...editedProfile.availability?.hours,
-                          end: e.target.value
-                        })}
+                        value={editedProfile.availability?.tempHours?.end || ''}
+                        onChange={(e) => {
+                          const newTime = e.target.value;
+                          setEditedProfile(prev => ({
+                            ...prev,
+                            availability: {
+                              ...prev.availability,
+                              tempHours: {
+                                ...prev.availability?.tempHours,
+                                end: newTime
+                              }
+                            }
+                          }));
+                        }}
                         className="w-full p-2 border rounded-md"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Time Zones */}
+                {/* Working Days with Hours */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Time Zones</label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {[
-                      'New York (EST/EDT)',
-                      'Chicago (CST/CDT)',
-                      'Denver (MST/MDT)',
-                      'Los Angeles (PST/PDT)',
-                      'London (GMT/BST)',
-                      'Paris (CET/CEST)',
-                      'Dubai (GST)',
-                      'Singapore (SGT)',
-                      'Tokyo (JST)',
-                      'Sydney (AEST/AEDT)'
-                    ].map((zone) => (
-                      <button
-                        key={zone}
-                        onClick={() => {
-                          const currentZones = editedProfile.availability?.timeZones || [];
-                          const updatedZones = currentZones.includes(zone)
-                            ? currentZones.filter(z => z !== zone)
-                            : [...currentZones, zone];
-                          handleAvailabilityChange('timeZones', updatedZones);
-                        }}
-                        className={`p-2 rounded-lg text-sm font-medium text-left transition-colors duration-200 ${
-                          editedProfile.availability?.timeZones?.includes(zone)
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                      >
-                        {zone}
-                      </button>
-                    ))}
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Working Schedule</label>
+                  <div className="space-y-2">
+                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
+                      const daySchedule = editedProfile.availability?.schedule?.find(s => s.day === day);
+                      return (
+                        <div key={day} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                          <div className="w-32">
+                            <label className="inline-flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={!!daySchedule}
+                                onChange={() => {
+                                  const currentSchedule = editedProfile.availability?.schedule || [];
+                                  let newSchedule;
+                                  
+                                  if (daySchedule) {
+                                    // Remove day if already exists
+                                    newSchedule = currentSchedule.filter(s => s.day !== day);
+                                  } else {
+                                    // Add new day with template hours
+                                    newSchedule = [
+                                      ...currentSchedule,
+                                      {
+                                        day,
+                                        hours: {
+                                          start: editedProfile.availability?.tempHours?.start || '09:00',
+                                          end: editedProfile.availability?.tempHours?.end || '17:00'
+                                        }
+                                      }
+                                    ];
+                                  }
+                                  
+                                  handleAvailabilityChange('schedule', newSchedule);
+                                }}
+                                className="rounded border-gray-300 text-blue-600 mr-2"
+                              />
+                              <span className="text-sm font-medium text-gray-700">{day}</span>
+                            </label>
+                          </div>
+                          {daySchedule && (
+                            <div className="flex-1 flex items-center gap-4">
+                              <div className="flex-1">
+                                <input
+                                  type="time"
+                                  value={daySchedule.hours.start}
+                                  onChange={(e) => {
+                                    const currentSchedule = editedProfile.availability?.schedule || [];
+                                    const newSchedule = currentSchedule.map(s => 
+                                      s.day === day 
+                                        ? { ...s, hours: { ...s.hours, start: e.target.value } }
+                                        : s
+                                    );
+                                    handleAvailabilityChange('schedule', newSchedule);
+                                  }}
+                                  className="w-full p-2 border rounded-md"
+                                />
+                              </div>
+                              <span className="text-gray-500">to</span>
+                              <div className="flex-1">
+                                <input
+                                  type="time"
+                                  value={daySchedule.hours.end}
+                                  onChange={(e) => {
+                                    const currentSchedule = editedProfile.availability?.schedule || [];
+                                    const newSchedule = currentSchedule.map(s => 
+                                      s.day === day 
+                                        ? { ...s, hours: { ...s.hours, end: e.target.value } }
+                                        : s
+                                    );
+                                    handleAvailabilityChange('schedule', newSchedule);
+                                  }}
+                                  className="w-full p-2 border rounded-md"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
+                </div>
+
+                {/* Time Zone */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Time Zone</label>
+                  <select
+                    value={editedProfile.availability?.timeZone || ''}
+                    onChange={(e) => handleAvailabilityChange('timeZone', e.target.value)}
+                    className="w-full p-2 border rounded-md bg-white"
+                  >
+                    <option value="">Select a time zone</option>
+                    {[
+                      'America/New_York (EST/EDT)',
+                      'America/Chicago (CST/CDT)',
+                      'America/Denver (MST/MDT)',
+                      'America/Los_Angeles (PST/PDT)',
+                      'Europe/London (GMT/BST)',
+                      'Europe/Paris (CET/CEST)',
+                      'Asia/Dubai (GST)',
+                      'Asia/Singapore (SGT)',
+                      'Asia/Tokyo (JST)',
+                      'Australia/Sydney (AEST/AEDT)'
+                    ].map((zone) => (
+                      <option key={zone} value={zone}>
+                        {zone}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Schedule Flexibility */}
@@ -1802,44 +1880,27 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Working Days Display */}
+                {/* Schedule Display */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Working Days</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {editedProfile.availability?.days?.map((day) => (
-                      <span
-                        key={day}
-                        className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium"
-                      >
-                        {day}
-                      </span>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Working Schedule</h4>
+                  <div className="space-y-2">
+                    {editedProfile.availability?.schedule?.map((schedule) => (
+                      <div key={schedule.day} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                        <span className="font-medium text-blue-700">{schedule.day}</span>
+                        <span className="text-blue-600">
+                          {schedule.hours.start} - {schedule.hours.end}
+                        </span>
+                      </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Working Hours Display */}
+                {/* Time Zone Display */}
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Working Hours</h4>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Time Zone</h4>
                   <p className="text-lg font-semibold text-gray-800">
-                    {editedProfile.availability?.hours?.start && editedProfile.availability?.hours?.end
-                      ? `${editedProfile.availability.hours.start} - ${editedProfile.availability.hours.end}`
-                      : 'Not specified'}
+                    {editedProfile.availability?.timeZone || 'Not specified'}
                   </p>
-                </div>
-
-                {/* Time Zones Display */}
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Time Zones</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {editedProfile.availability?.timeZones?.map((zone) => (
-                      <span
-                        key={zone}
-                        className="px-4 py-2 bg-purple-50 text-purple-700 rounded-lg text-sm font-medium"
-                      >
-                        {zone}
-                      </span>
-                    ))}
-                  </div>
                 </div>
 
                 {/* Schedule Flexibility Display */}

@@ -1684,8 +1684,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               <div className="space-y-6">
                 {/* Simple Working Hours and Days Selector */}
                 <div className="bg-gray-50 rounded-lg p-6">
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Default Working Hours</label>
+                  <div className="mb-8">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">Default Working Hours</label>
                     <div className="flex items-center gap-4 max-w-md">
                       <input
                         type="time"
@@ -1743,84 +1743,91 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Working Days</label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-4">Working Days</label>
+                    <div className="space-y-4">
                       {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => {
                         const daySchedule = editedProfile.availability?.schedule?.find(s => s.day === day);
                         return (
                           <div
                             key={day}
-                            className={`p-3 rounded border ${
+                            className={`p-4 rounded-lg border ${
                               daySchedule 
-                                ? 'border-blue-200 bg-blue-50' 
+                                ? 'border-blue-200 bg-blue-50 shadow-sm' 
                                 : 'border-gray-200 bg-white hover:border-blue-200'
                             }`}
                           >
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="font-medium">{day}</span>
-                              <button
-                                onClick={() => {
-                                  const currentSchedule = editedProfile.availability?.schedule || [];
-                                  let newSchedule;
-                                  
-                                  if (daySchedule) {
-                                    newSchedule = currentSchedule.filter(s => s.day !== day);
-                                  } else {
-                                    newSchedule = [
-                                      ...currentSchedule,
-                                      {
-                                        day,
-                                        hours: {
-                                          start: editedProfile.availability?.tempHours?.start || '09:00',
-                                          end: editedProfile.availability?.tempHours?.end || '17:00'
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-gray-800">{day}</span>
+                              <div className="flex items-center gap-8">
+                                {daySchedule && (
+                                  <div className="flex items-center gap-6">
+                                    <div className="flex-1 min-w-[140px]">
+                                      <label className="block text-xs text-gray-500 mb-1">Start</label>
+                                      <input
+                                        type="time"
+                                        value={daySchedule.hours.start}
+                                        onChange={(e) => {
+                                          const currentSchedule = editedProfile.availability?.schedule || [];
+                                          const newSchedule = currentSchedule.map(s => 
+                                            s.day === day 
+                                              ? { ...s, hours: { ...s.hours, start: e.target.value } }
+                                              : s
+                                          );
+                                          handleAvailabilityChange('schedule', newSchedule);
+                                        }}
+                                        className="w-full p-2 border rounded bg-white text-sm"
+                                      />
+                                    </div>
+                                    <div className="flex-1 min-w-[140px]">
+                                      <label className="block text-xs text-gray-500 mb-1">End</label>
+                                      <input
+                                        type="time"
+                                        value={daySchedule.hours.end}
+                                        onChange={(e) => {
+                                          const currentSchedule = editedProfile.availability?.schedule || [];
+                                          const newSchedule = currentSchedule.map(s => 
+                                            s.day === day 
+                                              ? { ...s, hours: { ...s.hours, end: e.target.value } }
+                                              : s
+                                          );
+                                          handleAvailabilityChange('schedule', newSchedule);
+                                        }}
+                                        className="w-full p-2 border rounded bg-white text-sm"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                                <button
+                                  onClick={() => {
+                                    const currentSchedule = editedProfile.availability?.schedule || [];
+                                    let newSchedule;
+                                    
+                                    if (daySchedule) {
+                                      newSchedule = currentSchedule.filter(s => s.day !== day);
+                                    } else {
+                                      newSchedule = [
+                                        ...currentSchedule,
+                                        {
+                                          day,
+                                          hours: {
+                                            start: editedProfile.availability?.tempHours?.start || '09:00',
+                                            end: editedProfile.availability?.tempHours?.end || '17:00'
+                                          }
                                         }
-                                      }
-                                    ];
-                                  }
-                                  handleAvailabilityChange('schedule', newSchedule);
-                                }}
-                                className={`px-3 py-1 rounded text-sm ${
-                                  daySchedule 
-                                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
-                              >
-                                {daySchedule ? 'Remove' : 'Add'}
-                              </button>
-                            </div>
-                            {daySchedule && (
-                              <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <input
-                                  type="time"
-                                  value={daySchedule.hours.start}
-                                  onChange={(e) => {
-                                    const currentSchedule = editedProfile.availability?.schedule || [];
-                                    const newSchedule = currentSchedule.map(s => 
-                                      s.day === day 
-                                        ? { ...s, hours: { ...s.hours, start: e.target.value } }
-                                        : s
-                                    );
+                                      ];
+                                    }
                                     handleAvailabilityChange('schedule', newSchedule);
                                   }}
-                                  className="flex-1 p-1 border rounded bg-white"
-                                />
-                                <span>-</span>
-                                <input
-                                  type="time"
-                                  value={daySchedule.hours.end}
-                                  onChange={(e) => {
-                                    const currentSchedule = editedProfile.availability?.schedule || [];
-                                    const newSchedule = currentSchedule.map(s => 
-                                      s.day === day 
-                                        ? { ...s, hours: { ...s.hours, end: e.target.value } }
-                                        : s
-                                    );
-                                    handleAvailabilityChange('schedule', newSchedule);
-                                  }}
-                                  className="flex-1 p-1 border rounded bg-white"
-                                />
+                                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                    daySchedule 
+                                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                  }`}
+                                >
+                                  {daySchedule ? 'Remove' : 'Add'}
+                                </button>
                               </div>
-                            )}
+                            </div>
                           </div>
                         );
                       })}

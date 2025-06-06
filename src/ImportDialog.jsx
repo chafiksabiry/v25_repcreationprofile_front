@@ -342,6 +342,44 @@ function ImportDialog({ isOpen, onClose, onImport }) {
       addAnalysisStep("Achievements extracted");
       setProgress(80);
 
+      // Extract availability information
+      const availabilityResponse = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: `Analyze the CV for any mentions of working hours, availability, or schedule preferences. Look for:
+            1. Preferred working hours
+            2. Time zone or location-based working hours
+            3. Schedule flexibility (remote work, flexible hours, etc.)
+            4. Any specific working day preferences
+
+            Return in this exact JSON format:
+            {
+              "schedule": [{
+                "day": "string (one of: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday)",
+                "hours": {
+                  "start": "string (HH:MM format)",
+                  "end": "string (HH:MM format)"
+                }
+              }],
+              "timeZone": "string",
+              "flexibility": ["string"]
+            }`
+          },
+          {
+            role: "user",
+            content: contentToProcess
+          }
+        ],
+        temperature: 0.3,
+        response_format: { type: "json_object" }
+      });
+
+      const availability = JSON.parse(availabilityResponse.choices[0].message.content);
+      addAnalysisStep("Availability preferences analyzed");
+      setProgress(85);
+
       // Ensure all arrays exist with default empty arrays
       const defaultArrays = {
         technical: [],
@@ -353,6 +391,13 @@ function ImportDialog({ isOpen, onClose, onImport }) {
         notableCompanies: [],
         roles: [],
         items: []
+      };
+
+      // Default availability if none found in CV
+      const defaultAvailability = {
+        schedule: [],
+        timeZone: '',
+        flexibility: []
       };
 
       // Combine all data with proper error handling and defaults
@@ -371,6 +416,7 @@ function ImportDialog({ isOpen, onClose, onImport }) {
           keyExpertise: experience.keyAreas || defaultArrays.keyAreas,
           notableCompanies: experience.notableCompanies || defaultArrays.notableCompanies
         },
+        availability: defaultAvailability,
         skills: {
           technical: experience.technicalSkills || defaultArrays.technicalSkills,
           professional: experience.professionalSkills || defaultArrays.professionalSkills,

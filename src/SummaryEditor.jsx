@@ -137,7 +137,19 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     const loadCountries = async () => {
       try {
         const countriesData = await getTimezones();
-        setCountries(countriesData);
+        
+        // Remove duplications based on countryCode
+        const uniqueCountries = countriesData.filter((country, index, self) => 
+          index === self.findIndex(c => c.countryCode === country.countryCode)
+        );
+        
+        // Sort countries alphabetically by name for better UX
+        const sortedCountries = uniqueCountries.sort((a, b) => 
+          a.countryName.localeCompare(b.countryName)
+        );
+        
+        setCountries(sortedCountries);
+        console.log(`Loaded ${sortedCountries.length} unique countries (filtered from ${countriesData.length} total)`);
       } catch (error) {
         console.error('Error loading countries:', error);
       }

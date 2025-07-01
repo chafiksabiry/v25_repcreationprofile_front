@@ -3,6 +3,7 @@ import { useProfile } from './hooks/useProfile';
 import openaiClient from './lib/ai/openaiClient';
 import { OpenAI } from 'openai';
 import { getLanguageCodeFromAI } from './lib/utils/textProcessing';
+import { getTimezones } from './lib/api/profiles';
 
 // Add CSS styles for error highlighting
 const styles = `
@@ -67,6 +68,10 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   });
   const [tempProfileDescription, setTempProfileDescription] = useState('');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [countries, setCountries] = useState([]);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const proficiencyLevels = [
     { value: 'A1', label: 'A1 - Beginner', description: 'Can understand and use basic phrases, introduce themselves' },
@@ -126,6 +131,76 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
     initializeSummary();
   }, [profileData, generatedSummary]);
+
+  // Load countries from API
+  useEffect(() => {
+    const loadCountries = async () => {
+      try {
+        const countriesData = await getTimezones();
+        setCountries(countriesData);
+      } catch (error) {
+        console.error('Error loading countries:', error);
+      }
+    };
+
+    loadCountries();
+  }, []);
+
+  // Close country dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.country-selector')) {
+        setShowCountryDropdown(false);
+        setCountrySearch('');
+        setIsSearching(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Filter countries based on search
+  const filteredCountries = countries.filter(country => 
+    country.countryName.toLowerCase().includes(countrySearch.toLowerCase()) ||
+    country.countryCode.toLowerCase().includes(countrySearch.toLowerCase())
+  );
+
+  // Handle country selection
+  const handleCountrySelect = async (country) => {
+    setShowCountryDropdown(false);
+    setCountrySearch('');
+    setIsSearching(false);
+    await handleProfileChange('country', country);
+  };
+
+  // Handle country input change
+  const handleCountryInputChange = (e) => {
+    const value = e.target.value;
+    setCountrySearch(value);
+    setIsSearching(true);
+    setShowCountryDropdown(true);
+  };
+
+  // Handle country input focus
+  const handleCountryInputFocus = () => {
+    setIsSearching(true);
+    setShowCountryDropdown(true);
+    // Clear the search to allow user to start fresh
+    if (!countrySearch) {
+      setCountrySearch('');
+    }
+  };
+
+  // Clear country selection
+  const clearCountrySelection = async () => {
+    setIsSearching(false);
+    setCountrySearch('');
+    setShowCountryDropdown(false);
+    await handleProfileChange('country', '');
+  };
 
   const validateProfile = () => {
     const errors = {};
@@ -1441,15 +1516,65 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">🌍 Country</h3>
-                  <input
-                    type="text"
-                    value={typeof editedProfile.personalInfo.country === 'object' 
-                      ? editedProfile.personalInfo.country?.countryCode || ''
-                      : editedProfile.personalInfo.country || ''}
-                    onChange={(e) => handleProfileChange('country', e.target.value)}
-                    className="w-full p-2 border rounded-md bg-white/50"
-                    placeholder="Enter your country code (e.g., US, FR, MA)"
-                  />
+                  <div className="relative country-selector">
+                    <input
+                      type="text"
+                      value={isSearching ? countrySearch : (typeof editedProfile.personalInfo.country === 'object' 
+                        ? `${editedProfile.personalInfo.country?.countryName} (${editedProfile.personalInfo.country?.countryCode})`
+                        : editedProfile.personalInfo.country || '')}
+                      onChange={handleCountryInputChange}
+                      onFocus={handleCountryInputFocus}
+                      className="w-full p-2 pr-8 border rounded-md bg-white/50"
+                      placeholder="Search for your country..."
+                    />
+                    {!isSearching && editedProfile.personalInfo.country && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsSearching(true);
+                          setCountrySearch('');
+                          setShowCountryDropdown(true);
+                        }}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        title="Clear selection"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                                         {showCountryDropdown && (
+                       <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20">
+                         {editedProfile.personalInfo.country && (
+                           <button
+                             onClick={clearCountrySelection}
+                             className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 border-b border-gray-100 flex items-center gap-2"
+                           >
+                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                             </svg>
+                             Clear selection
+                           </button>
+                         )}
+                         {filteredCountries.length > 0 ? (
+                           filteredCountries.slice(0, 10).map((country) => (
+                             <button
+                               key={country._id}
+                               onClick={() => handleCountrySelect(country)}
+                               className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center justify-between border-b border-gray-100 last:border-b-0"
+                             >
+                               <span className="font-medium">{country.countryName}</span>
+                               <span className="text-gray-500 text-xs">{country.countryCode}</span>
+                             </button>
+                           ))
+                         ) : countrySearch ? (
+                           <div className="px-4 py-2 text-sm text-gray-500">No countries found matching "{countrySearch}"</div>
+                         ) : (
+                           <div className="px-4 py-2 text-sm text-gray-500">Start typing to search for countries</div>
+                         )}
+                       </div>
+                     )}
+                  </div>
                   {renderError(validationErrors.country, 'country')}
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">

@@ -44,7 +44,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     industries: '',
     companies: '',
     name: '',
-    location: '',
+    country: '',
     email: '',
     phone: '',
     currentRole: '',
@@ -148,10 +148,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       console.error('Name validation failed:', errors.name);
     }
 
-    // Validate location
-    if (!editedProfile.personalInfo.location?.trim()) {
-      errors.location = 'Location is required';
-      console.error('Location validation failed:', errors.location);
+    // Validate country
+    const countryValue = typeof editedProfile.personalInfo.country === 'object' 
+      ? editedProfile.personalInfo.country?.countryCode 
+      : editedProfile.personalInfo.country;
+    if (!countryValue?.trim()) {
+      errors.country = 'Country is required';
+      console.error('Country validation failed:', errors.country);
     }
 
 /*     // Validate email
@@ -226,7 +229,10 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       // Validation rules
       const validations = {
         name: (val) => val.trim() ? '' : 'Name is required',
-        location: (val) => val.trim() ? '' : 'Location is required',
+        country: (val) => {
+          const countryValue = typeof val === 'object' ? val?.countryCode : val;
+          return countryValue?.trim() ? '' : 'Country is required';
+        },
         email: (val) => {
           if (!val.trim()) return 'Email is required';
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -278,7 +284,10 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       // Validation rules
       const validations = {
         name: (val) => val.trim() ? '' : 'Name is required',
-        location: (val) => val.trim() ? '' : 'Location is required',
+        country: (val) => {
+          const countryValue = typeof val === 'object' ? val?.countryCode : val;
+          return countryValue?.trim() ? '' : 'Country is required';
+        },
         email: (val) => {
           if (!val.trim()) return 'Email is required';
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -305,7 +314,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       }));
   
       // Only update backend if there are no validation errors AND all required fields are filled
-      const requiredFields = ['name', 'location', 'email', 'phone'];
+      const requiredFields = ['name', 'country', 'email', 'phone'];
       const currentValues = {
         ...editedProfile.personalInfo,
         [field]: value
@@ -314,7 +323,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       // Check if all required fields are valid
       const allFieldsValid = requiredFields.every(fieldName => {
         const fieldValue = currentValues[fieldName];
-        const fieldValidation = validations[fieldName] || ((val) => val.trim() ? '' : 'Required');
+        const fieldValidation = validations[fieldName] || ((val) => {
+          if (fieldName === 'country') {
+            const countryValue = typeof val === 'object' ? val?.countryCode : val;
+            return countryValue?.trim() ? '' : 'Required';
+          }
+          return val?.trim() ? '' : 'Required';
+        });
         return !fieldValidation(fieldValue);
       });
   
@@ -1425,15 +1440,17 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   {renderError(validationErrors.name, 'name')}
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">📍 Location</h3>
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">🌍 Country</h3>
                   <input
                     type="text"
-                    value={editedProfile.personalInfo.location}
-                    onChange={(e) => handleProfileChange('location', e.target.value)}
+                    value={typeof editedProfile.personalInfo.country === 'object' 
+                      ? editedProfile.personalInfo.country?.countryCode || ''
+                      : editedProfile.personalInfo.country || ''}
+                    onChange={(e) => handleProfileChange('country', e.target.value)}
                     className="w-full p-2 border rounded-md bg-white/50"
-                    placeholder="Enter your location"
+                    placeholder="Enter your country code (e.g., US, FR, MA)"
                   />
-                  {renderError(validationErrors.location, 'location')}
+                  {renderError(validationErrors.country, 'country')}
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">📧 Email</h3>
@@ -1620,9 +1637,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   {renderError(validationErrors.name, 'name')}
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">📍 Location</h3>
-                  <p className="text-xl font-semibold text-gray-800">{editedProfile.personalInfo.location || 'Not specified'}</p>
-                  {renderError(validationErrors.location, 'location')}
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">🌍 Country</h3>
+                  <p className="text-xl font-semibold text-gray-800">
+                    {typeof editedProfile.personalInfo.country === 'object' 
+                      ? `${editedProfile.personalInfo.country?.countryName} (${editedProfile.personalInfo.country?.countryCode})` 
+                      : editedProfile.personalInfo.country || 'Not specified'}
+                  </p>
+                  {renderError(validationErrors.country, 'country')}
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">📧 Email</h3>
@@ -1657,7 +1678,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">⭐ Experience</h3>
-                  <p className="text-xl font-semibold text-gray-800">{editedProfile.professionalSummary.yearsOfExperience || 'Not specified'}</p>
+                  <p className="text-xl font-semibold text-gray-800">{editedProfile.professionalSummary.yearsOfExperience || 0} years</p>
                   {renderError(validationErrors.yearsExperience, 'yearsExperience')}
                 </div>
               </>

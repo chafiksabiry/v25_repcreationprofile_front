@@ -132,11 +132,11 @@ function ImportDialog({ isOpen, onClose, onImport }) {
             content: `You are an expert CV analyzer. Extract the following basic information from the CV and return it in the exact JSON format shown below:
             {
               "name": "string",
-              "location": "string",
+              "country": "string (MUST be the 2-letter ISO country code as used by timezoneDB API - e.g., 'FR' for France, 'GB' for United Kingdom, 'US' for United States, 'SS' for South Sudan, 'DE' for Germany, 'CA' for Canada, etc.)",
               "email": "string",
               "phone": "string",
               "currentRole": "string",
-              "yearsOfExperience": "string"
+              "yearsOfExperience": "number (MUST be an integer between 0 and 50)"
             }`
           },
           {
@@ -396,7 +396,7 @@ function ImportDialog({ isOpen, onClose, onImport }) {
       // Default availability if none found in CV
       const defaultAvailability = {
         schedule: [],
-        timeZone: '',
+        timeZone: null,
         flexibility: []
       };
 
@@ -404,14 +404,14 @@ function ImportDialog({ isOpen, onClose, onImport }) {
       const combinedData = {
         personalInfo: {
           name: basicInfo.name || '',
-          location: basicInfo.location || '',
+          country: basicInfo.country || '',
           email: basicInfo.email || '',
           phone: basicInfo.phone || '',
           languages: skills.languages || defaultArrays.languages
         },
         professionalSummary: {
-          yearsOfExperience: experience.yearsOfExperience || '',
-          currentRole: experience.currentRole || '',
+          yearsOfExperience: Number(basicInfo.yearsOfExperience) || 0,
+          currentRole: basicInfo.currentRole || '',
           industries: experience.industries || defaultArrays.industries,
           keyExpertise: experience.keyAreas || defaultArrays.keyAreas,
           notableCompanies: experience.notableCompanies || defaultArrays.notableCompanies

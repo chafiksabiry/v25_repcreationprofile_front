@@ -107,3 +107,15 @@ export const checkProfileExists = async (userId) => {
     return false;
   }
 };
+
+// Add getTimezones function
+export const getTimezones = async () => {
+  try {
+    console.log('Fetching timezones from API');
+    const { data } = await api.get('/timezones');
+    return data.data; // Return the data array from the response
+  } catch (error) {
+    console.error('Error fetching timezones:', error);
+    throw error.response?.data || error;
+  }
+};

@@ -72,6 +72,9 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   const [countrySearch, setCountrySearch] = useState('');
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [timezoneSearch, setTimezoneSearch] = useState('');
+  const [showTimezoneDropdown, setShowTimezoneDropdown] = useState(false);
+  const [isSearchingTimezone, setIsSearchingTimezone] = useState(false);
 
   const proficiencyLevels = [
     { value: 'A1', label: 'A1 - Beginner', description: 'Can understand and use basic phrases, introduce themselves' },
@@ -158,13 +161,18 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     loadCountries();
   }, []);
 
-  // Close country dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!event.target.closest('.country-selector')) {
         setShowCountryDropdown(false);
         setCountrySearch('');
         setIsSearching(false);
+      }
+      if (!event.target.closest('.timezone-selector')) {
+        setShowTimezoneDropdown(false);
+        setTimezoneSearch('');
+        setIsSearchingTimezone(false);
       }
     };
 
@@ -212,6 +220,52 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     setCountrySearch('');
     setShowCountryDropdown(false);
     await handleProfileChange('country', '');
+  };
+
+  // Filter timezones based on search
+  const filteredTimezones = countries.filter(timezone => 
+    timezone.countryName.toLowerCase().includes(timezoneSearch.toLowerCase()) ||
+    timezone.zoneName.toLowerCase().includes(timezoneSearch.toLowerCase()) ||
+    timezone.countryCode.toLowerCase().includes(timezoneSearch.toLowerCase())
+  );
+
+  // Handle timezone selection
+  const handleTimezoneSelect = async (timezone) => {
+    setShowTimezoneDropdown(false);
+    setTimezoneSearch('');
+    setIsSearchingTimezone(false);
+    await handleAvailabilityChange('timeZone', timezone._id);
+  };
+
+  // Handle timezone input change
+  const handleTimezoneInputChange = (e) => {
+    const value = e.target.value;
+    setTimezoneSearch(value);
+    setIsSearchingTimezone(true);
+    setShowTimezoneDropdown(true);
+  };
+
+  // Handle timezone input focus
+  const handleTimezoneInputFocus = () => {
+    setIsSearchingTimezone(true);
+    setShowTimezoneDropdown(true);
+    if (!timezoneSearch) {
+      setTimezoneSearch('');
+    }
+  };
+
+  // Clear timezone selection
+  const clearTimezoneSelection = async () => {
+    setIsSearchingTimezone(false);
+    setTimezoneSearch('');
+    setShowTimezoneDropdown(false);
+    await handleAvailabilityChange('timeZone', null);
+  };
+
+  // Get current timezone object from _id
+  const getCurrentTimezone = () => {
+    if (!editedProfile.availability?.timeZone) return null;
+    return countries.find(tz => tz._id === editedProfile.availability.timeZone);
   };
 
   const validateProfile = () => {
@@ -1996,27 +2050,69 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 {/* Time Zone */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Time Zone</label>
-                  <select
-                    value={editedProfile.availability?.timeZone || ''}
-                    onChange={(e) => handleAvailabilityChange('timeZone', e.target.value)}
-                    className="w-full max-w-md p-2 border rounded bg-white"
-                  >
-                    <option value="">Select your time zone</option>
-                    {[
-                      'America/New_York (EST/EDT)',
-                      'America/Chicago (CST/CDT)',
-                      'America/Denver (MST/MDT)',
-                      'America/Los_Angeles (PST/PDT)',
-                      'Europe/London (GMT/BST)',
-                      'Europe/Paris (CET/CEST)',
-                      'Asia/Dubai (GST)',
-                      'Asia/Singapore (SGT)',
-                      'Asia/Tokyo (JST)',
-                      'Australia/Sydney (AEST/AEDT)'
-                    ].map((zone) => (
-                      <option key={zone} value={zone}>{zone}</option>
-                    ))}
-                  </select>
+                  <div className="relative timezone-selector max-w-md">
+                    <input
+                      type="text"
+                      value={isSearchingTimezone ? timezoneSearch : (() => {
+                        const currentTz = getCurrentTimezone();
+                        return currentTz ? `${currentTz.countryName} - ${currentTz.zoneName}` : '';
+                      })()}
+                      onChange={handleTimezoneInputChange}
+                      onFocus={handleTimezoneInputFocus}
+                      className="w-full p-2 pr-8 border rounded bg-white"
+                      placeholder="Search for your timezone..."
+                    />
+                    {!isSearchingTimezone && editedProfile.availability?.timeZone && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsSearchingTimezone(true);
+                          setTimezoneSearch('');
+                          setShowTimezoneDropdown(true);
+                        }}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        title="Clear selection"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                    {showTimezoneDropdown && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20">
+                        {editedProfile.availability?.timeZone && (
+                          <button
+                            onClick={clearTimezoneSelection}
+                            className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 border-b border-gray-100 flex items-center gap-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Clear selection
+                          </button>
+                        )}
+                        {filteredTimezones.length > 0 ? (
+                          filteredTimezones.slice(0, 10).map((timezone) => (
+                            <button
+                              key={timezone._id}
+                              onClick={() => handleTimezoneSelect(timezone)}
+                              className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-medium">{timezone.countryName}</span>
+                                <span className="text-xs text-gray-500">{timezone.zoneName}</span>
+                                <span className="text-xs text-blue-600">GMT{timezone.gmtOffset >= 0 ? '+' : ''}{Math.floor(timezone.gmtOffset / 3600)}:{Math.abs(timezone.gmtOffset % 3600 / 60).toString().padStart(2, '0')}</span>
+                              </div>
+                            </button>
+                          ))
+                        ) : timezoneSearch ? (
+                          <div className="px-4 py-2 text-sm text-gray-500">No timezones found matching "{timezoneSearch}"</div>
+                        ) : (
+                          <div className="px-4 py-2 text-sm text-gray-500">Start typing to search for timezones</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Schedule Flexibility */}
@@ -2075,7 +2171,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Time Zone</h4>
                   <p className="text-gray-800">
-                    {editedProfile.availability?.timeZone || 'Not specified'}
+                    {(() => {
+                      const currentTz = getCurrentTimezone();
+                      return currentTz 
+                        ? `${currentTz.countryName} - ${currentTz.zoneName} (GMT${currentTz.gmtOffset >= 0 ? '+' : ''}${Math.floor(currentTz.gmtOffset / 3600)}:${Math.abs(currentTz.gmtOffset % 3600 / 60).toString().padStart(2, '0')})`
+                        : 'Not specified';
+                    })()}
                   </p>
                 </div>
 

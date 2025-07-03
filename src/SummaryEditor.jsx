@@ -234,7 +234,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     setShowTimezoneDropdown(false);
     setTimezoneSearch('');
     setIsSearchingTimezone(false);
-    await handleAvailabilityChange('timeZone', timezone._id);
+    await handleAvailabilityChange('timeZone', timezone);
   };
 
   // Handle timezone input change
@@ -262,9 +262,16 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     await handleAvailabilityChange('timeZone', null);
   };
 
-  // Get current timezone object from _id
+  // Get current timezone object
   const getCurrentTimezone = () => {
     if (!editedProfile.availability?.timeZone) return null;
+    
+    // If timeZone is already an object (as it should be), return it directly
+    if (typeof editedProfile.availability.timeZone === 'object') {
+      return editedProfile.availability.timeZone;
+    }
+    
+    // Fallback: if it's just an ID string, find it in countries list
     return countries.find(tz => tz._id === editedProfile.availability.timeZone);
   };
 
@@ -2062,7 +2069,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                       className="w-full p-2 pr-8 border rounded bg-white"
                       placeholder="Search for your timezone..."
                     />
-                    {!isSearchingTimezone && editedProfile.availability?.timeZone && (
+                    {!isSearchingTimezone && getCurrentTimezone() && (
                       <button
                         type="button"
                         onClick={() => {
@@ -2080,7 +2087,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     )}
                     {showTimezoneDropdown && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20">
-                        {editedProfile.availability?.timeZone && (
+                        {getCurrentTimezone() && (
                           <button
                             onClick={clearTimezoneSelection}
                             className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 border-b border-gray-100 flex items-center gap-2"

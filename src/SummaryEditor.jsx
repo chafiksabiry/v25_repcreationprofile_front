@@ -3,6 +3,7 @@ import { useProfile } from './hooks/useProfile';
 import openaiClient from './lib/ai/openaiClient';
 import { OpenAI } from 'openai';
 import { getLanguageCodeFromAI } from './lib/utils/textProcessing';
+import { getTimezones } from './lib/api/profiles';
 
 // Add CSS styles for error highlighting
 const styles = `
@@ -44,7 +45,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     industries: '',
     companies: '',
     name: '',
-    location: '',
+    country: '',
     email: '',
     phone: '',
     currentRole: '',
@@ -67,6 +68,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   });
   const [tempProfileDescription, setTempProfileDescription] = useState('');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [countries, setCountries] = useState([]);
+  const [countrySearch, setCountrySearch] = useState('');
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [timezoneSearch, setTimezoneSearch] = useState('');
+  const [showTimezoneDropdown, setShowTimezoneDropdown] = useState(false);
+  const [isSearchingTimezone, setIsSearchingTimezone] = useState(false);
 
   const proficiencyLevels = [
     { value: 'A1', label: 'A1 - Beginner', description: 'Can understand and use basic phrases, introduce themselves' },
@@ -127,6 +135,146 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     initializeSummary();
   }, [profileData, generatedSummary]);
 
+  // Load countries from API
+  useEffect(() => {
+    const loadCountries = async () => {
+      try {
+        const countriesData = await getTimezones();
+        
+        // Remove duplications based on countryCode
+        const uniqueCountries = countriesData.filter((country, index, self) => 
+          index === self.findIndex(c => c.countryCode === country.countryCode)
+        );
+        
+        // Sort countries alphabetically by name for better UX
+        const sortedCountries = uniqueCountries.sort((a, b) => 
+          a.countryName.localeCompare(b.countryName)
+        );
+        
+        setCountries(sortedCountries);
+        console.log(`Loaded ${sortedCountries.length} unique countries (filtered from ${countriesData.length} total)`);
+      } catch (error) {
+        console.error('Error loading countries:', error);
+      }
+    };
+
+    loadCountries();
+  }, []);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.country-selector')) {
+        setShowCountryDropdown(false);
+        setCountrySearch('');
+        setIsSearching(false);
+      }
+      if (!event.target.closest('.timezone-selector')) {
+        setShowTimezoneDropdown(false);
+        setTimezoneSearch('');
+        setIsSearchingTimezone(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Filter countries based on search
+  const filteredCountries = countries.filter(country => 
+    country.countryName.toLowerCase().includes(countrySearch.toLowerCase()) ||
+    country.countryCode.toLowerCase().includes(countrySearch.toLowerCase())
+  );
+
+  // Handle country selection
+  const handleCountrySelect = async (country) => {
+    setShowCountryDropdown(false);
+    setCountrySearch('');
+    setIsSearching(false);
+    await handleProfileChange('country', country);
+  };
+
+  // Handle country input change
+  const handleCountryInputChange = (e) => {
+    const value = e.target.value;
+    setCountrySearch(value);
+    setIsSearching(true);
+    setShowCountryDropdown(true);
+  };
+
+  // Handle country input focus
+  const handleCountryInputFocus = () => {
+    setIsSearching(true);
+    setShowCountryDropdown(true);
+    // Clear the search to allow user to start fresh
+    if (!countrySearch) {
+      setCountrySearch('');
+    }
+  };
+
+  // Clear country selection
+  const clearCountrySelection = async () => {
+    setIsSearching(false);
+    setCountrySearch('');
+    setShowCountryDropdown(false);
+    await handleProfileChange('country', '');
+  };
+
+  // Filter timezones based on search
+  const filteredTimezones = countries.filter(timezone => 
+    timezone.countryName.toLowerCase().includes(timezoneSearch.toLowerCase()) ||
+    timezone.zoneName.toLowerCase().includes(timezoneSearch.toLowerCase()) ||
+    timezone.countryCode.toLowerCase().includes(timezoneSearch.toLowerCase())
+  );
+
+  // Handle timezone selection
+  const handleTimezoneSelect = async (timezone) => {
+    setShowTimezoneDropdown(false);
+    setTimezoneSearch('');
+    setIsSearchingTimezone(false);
+    await handleAvailabilityChange('timeZone', timezone);
+  };
+
+  // Handle timezone input change
+  const handleTimezoneInputChange = (e) => {
+    const value = e.target.value;
+    setTimezoneSearch(value);
+    setIsSearchingTimezone(true);
+    setShowTimezoneDropdown(true);
+  };
+
+  // Handle timezone input focus
+  const handleTimezoneInputFocus = () => {
+    setIsSearchingTimezone(true);
+    setShowTimezoneDropdown(true);
+    if (!timezoneSearch) {
+      setTimezoneSearch('');
+    }
+  };
+
+  // Clear timezone selection
+  const clearTimezoneSelection = async () => {
+    setIsSearchingTimezone(false);
+    setTimezoneSearch('');
+    setShowTimezoneDropdown(false);
+    await handleAvailabilityChange('timeZone', null);
+  };
+
+  // Get current timezone object
+  const getCurrentTimezone = () => {
+    if (!editedProfile.availability?.timeZone) return null;
+    
+    // If timeZone is already an object (as it should be), return it directly
+    if (typeof editedProfile.availability.timeZone === 'object') {
+      return editedProfile.availability.timeZone;
+    }
+    
+    // Fallback: if it's just an ID string, find it in countries list
+    return countries.find(tz => tz._id === editedProfile.availability.timeZone);
+  };
+
   const validateProfile = () => {
     const errors = {};
 
@@ -148,10 +296,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       console.error('Name validation failed:', errors.name);
     }
 
-    // Validate location
-    if (!editedProfile.personalInfo.location?.trim()) {
-      errors.location = 'Location is required';
-      console.error('Location validation failed:', errors.location);
+    // Validate country
+    const countryValue = typeof editedProfile.personalInfo.country === 'object' 
+      ? editedProfile.personalInfo.country?.countryCode 
+      : editedProfile.personalInfo.country;
+    if (!countryValue?.trim()) {
+      errors.country = 'Country is required';
+      console.error('Country validation failed:', errors.country);
     }
 
 /*     // Validate email
@@ -226,7 +377,10 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       // Validation rules
       const validations = {
         name: (val) => val.trim() ? '' : 'Name is required',
-        location: (val) => val.trim() ? '' : 'Location is required',
+        country: (val) => {
+          const countryValue = typeof val === 'object' ? val?.countryCode : val;
+          return countryValue?.trim() ? '' : 'Country is required';
+        },
         email: (val) => {
           if (!val.trim()) return 'Email is required';
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -278,7 +432,10 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       // Validation rules
       const validations = {
         name: (val) => val.trim() ? '' : 'Name is required',
-        location: (val) => val.trim() ? '' : 'Location is required',
+        country: (val) => {
+          const countryValue = typeof val === 'object' ? val?.countryCode : val;
+          return countryValue?.trim() ? '' : 'Country is required';
+        },
         email: (val) => {
           if (!val.trim()) return 'Email is required';
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -305,7 +462,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       }));
   
       // Only update backend if there are no validation errors AND all required fields are filled
-      const requiredFields = ['name', 'location', 'email', 'phone'];
+      const requiredFields = ['name', 'country', 'email', 'phone'];
       const currentValues = {
         ...editedProfile.personalInfo,
         [field]: value
@@ -314,7 +471,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       // Check if all required fields are valid
       const allFieldsValid = requiredFields.every(fieldName => {
         const fieldValue = currentValues[fieldName];
-        const fieldValidation = validations[fieldName] || ((val) => val.trim() ? '' : 'Required');
+        const fieldValidation = validations[fieldName] || ((val) => {
+          if (fieldName === 'country') {
+            const countryValue = typeof val === 'object' ? val?.countryCode : val;
+            return countryValue?.trim() ? '' : 'Required';
+          }
+          return val?.trim() ? '' : 'Required';
+        });
         return !fieldValidation(fieldValue);
       });
   
@@ -1425,15 +1588,67 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   {renderError(validationErrors.name, 'name')}
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">📍 Location</h3>
-                  <input
-                    type="text"
-                    value={editedProfile.personalInfo.location}
-                    onChange={(e) => handleProfileChange('location', e.target.value)}
-                    className="w-full p-2 border rounded-md bg-white/50"
-                    placeholder="Enter your location"
-                  />
-                  {renderError(validationErrors.location, 'location')}
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">🌍 Country</h3>
+                  <div className="relative country-selector">
+                    <input
+                      type="text"
+                      value={isSearching ? countrySearch : (typeof editedProfile.personalInfo.country === 'object' 
+                        ? `${editedProfile.personalInfo.country?.countryName} (${editedProfile.personalInfo.country?.countryCode})`
+                        : editedProfile.personalInfo.country || '')}
+                      onChange={handleCountryInputChange}
+                      onFocus={handleCountryInputFocus}
+                      className="w-full p-2 pr-8 border rounded-md bg-white/50"
+                      placeholder="Search for your country..."
+                    />
+                    {!isSearching && editedProfile.personalInfo.country && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsSearching(true);
+                          setCountrySearch('');
+                          setShowCountryDropdown(true);
+                        }}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        title="Clear selection"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                                         {showCountryDropdown && (
+                       <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20">
+                         {editedProfile.personalInfo.country && (
+                           <button
+                             onClick={clearCountrySelection}
+                             className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 border-b border-gray-100 flex items-center gap-2"
+                           >
+                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                             </svg>
+                             Clear selection
+                           </button>
+                         )}
+                         {filteredCountries.length > 0 ? (
+                           filteredCountries.slice(0, 10).map((country) => (
+                             <button
+                               key={country._id}
+                               onClick={() => handleCountrySelect(country)}
+                               className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center justify-between border-b border-gray-100 last:border-b-0"
+                             >
+                               <span className="font-medium">{country.countryName}</span>
+                               <span className="text-gray-500 text-xs">{country.countryCode}</span>
+                             </button>
+                           ))
+                         ) : countrySearch ? (
+                           <div className="px-4 py-2 text-sm text-gray-500">No countries found matching "{countrySearch}"</div>
+                         ) : (
+                           <div className="px-4 py-2 text-sm text-gray-500">Start typing to search for countries</div>
+                         )}
+                       </div>
+                     )}
+                  </div>
+                  {renderError(validationErrors.country, 'country')}
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">📧 Email</h3>
@@ -1620,9 +1835,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   {renderError(validationErrors.name, 'name')}
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">📍 Location</h3>
-                  <p className="text-xl font-semibold text-gray-800">{editedProfile.personalInfo.location || 'Not specified'}</p>
-                  {renderError(validationErrors.location, 'location')}
+                  <h3 className="text-sm font-medium text-gray-500 mb-2">🌍 Country</h3>
+                  <p className="text-xl font-semibold text-gray-800">
+                    {typeof editedProfile.personalInfo.country === 'object' 
+                      ? `${editedProfile.personalInfo.country?.countryName} (${editedProfile.personalInfo.country?.countryCode})` 
+                      : editedProfile.personalInfo.country || 'Not specified'}
+                  </p>
+                  {renderError(validationErrors.country, 'country')}
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">📧 Email</h3>
@@ -1657,7 +1876,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">⭐ Experience</h3>
-                  <p className="text-xl font-semibold text-gray-800">{editedProfile.professionalSummary.yearsOfExperience || 'Not specified'}</p>
+                  <p className="text-xl font-semibold text-gray-800">{editedProfile.professionalSummary.yearsOfExperience || 0} years</p>
                   {renderError(validationErrors.yearsExperience, 'yearsExperience')}
                 </div>
               </>
@@ -1838,27 +2057,69 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 {/* Time Zone */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Time Zone</label>
-                  <select
-                    value={editedProfile.availability?.timeZone || ''}
-                    onChange={(e) => handleAvailabilityChange('timeZone', e.target.value)}
-                    className="w-full max-w-md p-2 border rounded bg-white"
-                  >
-                    <option value="">Select your time zone</option>
-                    {[
-                      'America/New_York (EST/EDT)',
-                      'America/Chicago (CST/CDT)',
-                      'America/Denver (MST/MDT)',
-                      'America/Los_Angeles (PST/PDT)',
-                      'Europe/London (GMT/BST)',
-                      'Europe/Paris (CET/CEST)',
-                      'Asia/Dubai (GST)',
-                      'Asia/Singapore (SGT)',
-                      'Asia/Tokyo (JST)',
-                      'Australia/Sydney (AEST/AEDT)'
-                    ].map((zone) => (
-                      <option key={zone} value={zone}>{zone}</option>
-                    ))}
-                  </select>
+                  <div className="relative timezone-selector max-w-md">
+                    <input
+                      type="text"
+                      value={isSearchingTimezone ? timezoneSearch : (() => {
+                        const currentTz = getCurrentTimezone();
+                        return currentTz ? `${currentTz.countryName} - ${currentTz.zoneName}` : '';
+                      })()}
+                      onChange={handleTimezoneInputChange}
+                      onFocus={handleTimezoneInputFocus}
+                      className="w-full p-2 pr-8 border rounded bg-white"
+                      placeholder="Search for your timezone..."
+                    />
+                    {!isSearchingTimezone && getCurrentTimezone() && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsSearchingTimezone(true);
+                          setTimezoneSearch('');
+                          setShowTimezoneDropdown(true);
+                        }}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        title="Clear selection"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                    {showTimezoneDropdown && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20">
+                        {getCurrentTimezone() && (
+                          <button
+                            onClick={clearTimezoneSelection}
+                            className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 border-b border-gray-100 flex items-center gap-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Clear selection
+                          </button>
+                        )}
+                        {filteredTimezones.length > 0 ? (
+                          filteredTimezones.slice(0, 10).map((timezone) => (
+                            <button
+                              key={timezone._id}
+                              onClick={() => handleTimezoneSelect(timezone)}
+                              className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-medium">{timezone.countryName}</span>
+                                <span className="text-xs text-gray-500">{timezone.zoneName}</span>
+                                <span className="text-xs text-blue-600">GMT{timezone.gmtOffset >= 0 ? '+' : ''}{Math.floor(timezone.gmtOffset / 3600)}:{Math.abs(timezone.gmtOffset % 3600 / 60).toString().padStart(2, '0')}</span>
+                              </div>
+                            </button>
+                          ))
+                        ) : timezoneSearch ? (
+                          <div className="px-4 py-2 text-sm text-gray-500">No timezones found matching "{timezoneSearch}"</div>
+                        ) : (
+                          <div className="px-4 py-2 text-sm text-gray-500">Start typing to search for timezones</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Schedule Flexibility */}
@@ -1917,7 +2178,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 <div>
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Time Zone</h4>
                   <p className="text-gray-800">
-                    {editedProfile.availability?.timeZone || 'Not specified'}
+                    {(() => {
+                      const currentTz = getCurrentTimezone();
+                      return currentTz 
+                        ? `${currentTz.countryName} - ${currentTz.zoneName} (GMT${currentTz.gmtOffset >= 0 ? '+' : ''}${Math.floor(currentTz.gmtOffset / 3600)}:${Math.abs(currentTz.gmtOffset % 3600 / 60).toString().padStart(2, '0')})`
+                        : 'Not specified';
+                    })()}
                   </p>
                 </div>
 

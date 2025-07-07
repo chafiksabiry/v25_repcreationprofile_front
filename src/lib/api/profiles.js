@@ -119,3 +119,15 @@ export const getTimezones = async () => {
     throw error.response?.data || error;
   }
 };
+
+// Add getSkillsGrouped function
+export const getSkillsGrouped = async (skillType) => {
+  try {
+    console.log(`Fetching ${skillType} skills from API`);
+    const { data } = await api.get(`/skills/${skillType}/grouped`);
+    return data.data; // Return the data object with grouped skills
+  } catch (error) {
+    console.error(`Error fetching ${skillType} skills:`, error);
+    throw error.response?.data || error;
+  }
+};

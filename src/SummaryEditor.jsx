@@ -1860,12 +1860,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-gray-900">Your Professional Story ✨</h2>
             <div className="flex items-center gap-3">
-              {hasUnsavedChanges && (
-                <span className="text-sm text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
-                  Unsaved changes
-                </span>
-              )}
-              
               {editingProfile ? (
                 <div className="flex items-center gap-2">
             <button

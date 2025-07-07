@@ -503,6 +503,41 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     setCountrySearch('');
     setIsSearching(false);
     handleProfileChange('country', country);
+    
+    // Auto-suggest timezone based on country
+    suggestTimezoneForCountry(country);
+  };
+
+  // Suggest primary timezone for selected country
+  const suggestTimezoneForCountry = (selectedCountry, forceUpdate = false) => {
+    if (!selectedCountry || !selectedCountry.countryCode) return;
+    
+    // Find primary timezone for this country (usually the capital or most common one)
+    const countryTimezones = countries.filter(tz => 
+      tz.countryCode === selectedCountry.countryCode
+    );
+    
+    if (countryTimezones.length > 0) {
+      // Sort by GMT offset to get a consistent primary timezone
+      // You could also prioritize by population or capital city if that data is available
+      const primaryTimezone = countryTimezones.sort((a, b) => a.gmtOffset - b.gmtOffset)[0];
+      
+      // Auto-suggest this timezone (only if no timezone is currently set or if forced)
+      if (!editedProfile.availability?.timeZone || forceUpdate) {
+        handleAvailabilityChangeLocal('timeZone', primaryTimezone);
+        showToast(`Timezone ${forceUpdate ? 'updated' : 'automatically set'} to ${primaryTimezone.zoneName} based on your country. You can change it if needed.`, 'success');
+      }
+    }
+  };
+
+  // Manual timezone suggestion based on current country
+  const suggestTimezoneForCurrentCountry = () => {
+    const currentCountry = editedProfile.personalInfo?.country;
+    if (currentCountry) {
+      suggestTimezoneForCountry(currentCountry, true);
+    } else {
+      showToast('Please select a country first to get timezone suggestions.', 'error');
+    }
   };
 
   // Handle country input change
@@ -582,6 +617,29 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     
     // Fallback: if it's just an ID string, find it in countries list
     return countries.find(tz => tz._id === editedProfile.availability.timeZone);
+  };
+
+  // Check if timezone matches the selected country
+  const checkTimezoneCountryMatch = () => {
+    const currentTimezone = getCurrentTimezone();
+    const selectedCountry = editedProfile.personalInfo?.country;
+    
+    if (!currentTimezone || !selectedCountry) return { matches: true, message: '' };
+    
+    const selectedCountryCode = typeof selectedCountry === 'object' ? selectedCountry.countryCode : selectedCountry;
+    const timezoneCountryCode = currentTimezone.countryCode;
+    
+    if (selectedCountryCode !== timezoneCountryCode) {
+      const timezoneCountryName = countries.find(c => c.countryCode === timezoneCountryCode)?.countryName || 'Unknown';
+      const selectedCountryName = typeof selectedCountry === 'object' ? selectedCountry.countryName : selectedCountry;
+      
+      return {
+        matches: false,
+        message: `Your timezone is set to ${timezoneCountryName}, but your country is ${selectedCountryName}. This is fine if you work across time zones.`
+      };
+    }
+    
+    return { matches: true, message: '' };
   };
 
   const validateProfile = () => {
@@ -2377,34 +2435,35 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 {/* Time Zone */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Time Zone</label>
-                  <div className="relative timezone-selector max-w-md">
-                    <input
-                      type="text"
-                      value={isSearchingTimezone ? timezoneSearch : (() => {
-                        const currentTz = getCurrentTimezone();
-                        return currentTz ? `${currentTz.countryName} - ${currentTz.zoneName}` : '';
-                      })()}
-                      onChange={handleTimezoneInputChange}
-                      onFocus={handleTimezoneInputFocus}
-                      className="w-full p-2 pr-8 border rounded bg-white"
-                      placeholder="Search for your timezone..."
-                    />
-                    {!isSearchingTimezone && getCurrentTimezone() && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsSearchingTimezone(true);
-                          setTimezoneSearch('');
-                          setShowTimezoneDropdown(true);
-                        }}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        title="Clear selection"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
+                  <div className="flex gap-2 max-w-2xl">
+                    <div className="relative timezone-selector flex-1">
+                      <input
+                        type="text"
+                        value={isSearchingTimezone ? timezoneSearch : (() => {
+                          const currentTz = getCurrentTimezone();
+                          return currentTz ? `${currentTz.countryName} - ${currentTz.zoneName}` : '';
+                        })()}
+                        onChange={handleTimezoneInputChange}
+                        onFocus={handleTimezoneInputFocus}
+                        className="w-full p-2 pr-8 border rounded bg-white"
+                        placeholder="Search for your timezone..."
+                      />
+                      {!isSearchingTimezone && getCurrentTimezone() && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsSearchingTimezone(true);
+                            setTimezoneSearch('');
+                            setShowTimezoneDropdown(true);
+                          }}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          title="Clear selection"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
                     {showTimezoneDropdown && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20">
                         {getCurrentTimezone() && (
@@ -2439,7 +2498,38 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                         )}
                       </div>
                     )}
+                    </div>
+                    
+                    {/* Suggest timezone button */}
+                    <button
+                      onClick={suggestTimezoneForCurrentCountry}
+                      className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200 flex items-center gap-2 whitespace-nowrap"
+                      title="Suggest timezone based on your selected country"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      Suggest from Country
+                    </button>
                   </div>
+                  
+                  {/* Timezone-Country mismatch indicator */}
+                  {(() => {
+                    const matchCheck = checkTimezoneCountryMatch();
+                    return !matchCheck.matches ? (
+                      <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <svg className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div>
+                            <p className="text-sm text-amber-800 font-medium">Timezone Notice</p>
+                            <p className="text-xs text-amber-700 mt-1">{matchCheck.message}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
 
                 {/* Schedule Flexibility */}
@@ -2505,6 +2595,24 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                         : 'Not specified';
                     })()}
                   </p>
+                  
+                  {/* Timezone-Country mismatch indicator for read-only mode */}
+                  {(() => {
+                    const matchCheck = checkTimezoneCountryMatch();
+                    return !matchCheck.matches ? (
+                      <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <svg className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div>
+                            <p className="text-sm text-amber-800 font-medium">Timezone Notice</p>
+                            <p className="text-xs text-amber-700 mt-1">{matchCheck.message}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
 
                 {/* Schedule Flexibility Display */}

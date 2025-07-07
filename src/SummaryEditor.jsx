@@ -867,14 +867,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
             industries: ''
           }));
           
-          await updateProfileData(editedProfile._id, {
-            professionalSummary: {
-              ...editedProfile.professionalSummary,
-              industries: updatedIndustries
-            }
-          });
-          setTempIndustry('');
-          
+          // Local update only
           setEditedProfile(prev => ({
             ...prev,
             professionalSummary: {
@@ -882,6 +875,10 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               industries: updatedIndustries
             }
           }));
+          
+          setTempIndustry('');
+          setHasUnsavedChanges(true);
+          setModifiedSections(prev => ({ ...prev, professionalSummary: true }));
           
         } else if (type === 'notableCompanies') {
           if (!tempCompany.trim()) return;
@@ -893,14 +890,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
             companies: ''
           }));
           
-          await updateProfileData(editedProfile._id, {
-            professionalSummary: {
-              ...editedProfile.professionalSummary,
-              notableCompanies: updatedCompanies
-            }
-          });
-          setTempCompany('');
-          
+          // Local update only
           setEditedProfile(prev => ({
             ...prev,
             professionalSummary: {
@@ -908,6 +898,10 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               notableCompanies: updatedCompanies
             }
           }));
+          
+          setTempCompany('');
+          setHasUnsavedChanges(true);
+          setModifiedSections(prev => ({ ...prev, professionalSummary: true }));
           
         } else {
           // Handle skills (technical, professional, soft)
@@ -924,13 +918,22 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       try {
         if (type === 'industries' || type === 'notableCompanies') {
           const updatedData = editedProfile.professionalSummary[type].filter((_, i) => i !== index);
-          await updateProfileData(editedProfile._id, {
-            professionalSummary: {
-              ...editedProfile.professionalSummary,
-              [type]: updatedData
-            }
-          });
           
+          // Set validation error if removing the last item
+          if (updatedData.length === 0) {
+            setValidationErrors(prev => ({
+              ...prev,
+              [type === 'industries' ? 'industries' : 'companies']: `At least one ${type === 'industries' ? 'industry' : 'notable company'} is required`
+            }));
+          } else {
+            // Clear validation error if there are still items
+            setValidationErrors(prev => ({
+              ...prev,
+              [type === 'industries' ? 'industries' : 'companies']: ''
+            }));
+          }
+          
+          // Local update only
           setEditedProfile(prev => ({
             ...prev,
             professionalSummary: {
@@ -938,6 +941,9 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               [type]: updatedData
             }
           }));
+          
+          setHasUnsavedChanges(true);
+          setModifiedSections(prev => ({ ...prev, professionalSummary: true }));
         } else {
           // Handle skills removal locally
           const currentSkills = editedProfile.skills?.[type] || [];
@@ -1169,6 +1175,9 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     };
 
     const ExperienceForm = ({ experience, onSubmit, isNew = false }) => {
+      console.log('ExperienceForm rendered with:', { experience, isNew });
+      console.log('editingProfile state:', editingProfile);
+      
       const [formData, setFormData] = useState({
         title: experience.title || '',
         company: experience.company || '',
@@ -1178,35 +1187,62 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         isPresent: experience.endDate === 'present' || experience.isPresent || false
       });
 
+      console.log('ExperienceForm formData:', formData);
+
       const handleInputChange = (field, value) => {
-        console.log(`Updating ${field} with value:`, value);
-        setFormData(prev => ({
-          ...prev,
-          [field]: value
-        }));
+        console.log(`🔥 handleInputChange called: field=${field}, value=${value}`);
+        setFormData(prev => {
+          console.log(`🔥 Previous formData:`, prev);
+          const newData = {
+            ...prev,
+            [field]: value
+          };
+          console.log(`🔥 New formData:`, newData);
+          return newData;
+        });
       };
 
       const handleResponsibilityChange = (index, value) => {
+        console.log(`🔥 handleResponsibilityChange called: index=${index}, value=${value}`);
         const updatedResponsibilities = [...formData.responsibilities];
         updatedResponsibilities[index] = value;
-        setFormData(prev => ({
-          ...prev,
-          responsibilities: updatedResponsibilities
-        }));
+        setFormData(prev => {
+          console.log(`🔥 Previous formData:`, prev);
+          const newData = {
+            ...prev,
+            responsibilities: updatedResponsibilities
+          };
+          console.log(`🔥 New formData:`, newData);
+          return newData;
+        });
       };
 
       const addResponsibilityField = () => {
-        setFormData(prev => ({
-          ...prev,
-          responsibilities: [...prev.responsibilities, '']
-        }));
+        console.log('🔥 addResponsibilityField called');
+        setFormData(prev => {
+          console.log(`🔥 Previous formData:`, prev);
+          const newData = {
+            ...prev,
+            responsibilities: [...prev.responsibilities, '']
+          };
+          console.log(`🔥 New formData:`, newData);
+          return newData;
+        });
       };
 
       const removeResponsibilityField = (index) => {
-        setFormData(prev => ({
-          ...prev,
-          responsibilities: prev.responsibilities.filter((_, i) => i !== index)
-        }));
+        console.log(`🔥 removeResponsibilityField called: index=${index}`);
+        if (formData.responsibilities.length > 1) {
+          setFormData(prev => {
+            console.log(`🔥 Previous formData:`, prev);
+            const newData = {
+              ...prev,
+              responsibilities: prev.responsibilities.filter((_, i) => i !== index)
+            };
+            console.log(`🔥 New formData:`, newData);
+            return newData;
+          });
+        }
       };
 
       const handleSubmit = () => {
@@ -1224,16 +1260,22 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       };
 
       return (
-        <div className="space-y-4 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <div className="space-y-4 bg-white p-6 rounded-xl shadow-sm border border-gray-200 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
               <input
                 type="text"
                 value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
-                className="w-full p-2 border rounded-md"
+                onChange={(e) => {
+                  console.log('🔥 Title input onChange event:', e.target.value);
+                  handleInputChange('title', e.target.value);
+                }}
+                onClick={() => console.log('🔥 Title input clicked')}
+                onFocus={() => console.log('🔥 Title input focused')}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                 placeholder="e.g. Software Engineer"
+                autoComplete="off"
               />
             </div>
             <div>
@@ -1241,9 +1283,15 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               <input
                 type="text"
                 value={formData.company}
-                onChange={(e) => handleInputChange('company', e.target.value)}
-                className="w-full p-2 border rounded-md"
+                onChange={(e) => {
+                  console.log('🔥 Company input onChange event:', e.target.value);
+                  handleInputChange('company', e.target.value);
+                }}
+                onClick={() => console.log('🔥 Company input clicked')}
+                onFocus={() => console.log('🔥 Company input focused')}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                 placeholder="e.g. Tech Corp"
+                autoComplete="off"
               />
             </div>
             <div>
@@ -1251,8 +1299,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               <input
                 type="date"
                 value={formData.startDate}
-                onChange={(e) => handleInputChange('startDate', e.target.value)}
-                className="w-full p-2 border rounded-md"
+                onChange={(e) => {
+                  console.log('🔥 Start Date input onChange event:', e.target.value);
+                  handleInputChange('startDate', e.target.value);
+                }}
+                onClick={() => console.log('🔥 Start Date input clicked')}
+                onFocus={() => console.log('🔥 Start Date input focused')}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
               />
             </div>
             <div>
@@ -1261,21 +1314,28 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 <input
                   type="date"
                   value={formData.endDate}
-                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  onChange={(e) => {
+                    console.log('🔥 End Date input onChange event:', e.target.value);
+                    handleInputChange('endDate', e.target.value);
+                  }}
+                  onClick={() => console.log('🔥 End Date input clicked')}
+                  onFocus={() => console.log('🔥 End Date input focused')}
                   disabled={formData.isPresent}
-                  className="flex-1 p-2 border rounded-md disabled:bg-gray-100"
+                  className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed bg-white"
                 />
-                <label className="flex items-center gap-2 text-sm text-gray-600">
+                <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.isPresent}
                     onChange={(e) => {
+                      console.log('🔥 Present checkbox onChange event:', e.target.checked);
                       handleInputChange('isPresent', e.target.checked);
                       if (e.target.checked) {
                         handleInputChange('endDate', '');
                       }
                     }}
-                    className="rounded border-gray-300"
+                    onClick={() => console.log('🔥 Present checkbox clicked')}
+                    className="rounded border-gray-300 cursor-pointer"
                   />
                   Present
                 </label>
@@ -1286,28 +1346,43 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           <div className="space-y-3">
             <label className="block text-sm font-medium text-gray-700">Responsibilities</label>
             {formData.responsibilities.map((resp, index) => (
-              <div key={index} className="flex gap-2">
+              <div key={index} className="flex gap-2 items-center">
                 <input
                   type="text"
                   value={resp}
-                  onChange={(e) => handleResponsibilityChange(index, e.target.value)}
-                  className="flex-1 p-2 border rounded-md"
+                  onChange={(e) => {
+                    console.log(`🔥 Responsibility ${index} input onChange event:`, e.target.value);
+                    handleResponsibilityChange(index, e.target.value);
+                  }}
+                  onClick={() => console.log(`🔥 Responsibility ${index} input clicked`)}
+                  onFocus={() => console.log(`🔥 Responsibility ${index} input focused`)}
+                  className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                   placeholder="Add a responsibility"
+                  autoComplete="off"
                 />
-                <button
-                  onClick={() => removeResponsibilityField(index)}
-                  className="text-red-500 hover:text-red-700"
-                  type="button"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+                {formData.responsibilities.length > 1 && (
+                  <button
+                    onClick={() => {
+                      console.log(`🔥 Remove responsibility ${index} button clicked`);
+                      removeResponsibilityField(index);
+                    }}
+                    className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors duration-200"
+                    type="button"
+                    title="Remove responsibility"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                )}
               </div>
             ))}
             <button
-              onClick={addResponsibilityField}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+              onClick={() => {
+                console.log('🔥 Add responsibility button clicked');
+                addResponsibilityField();
+              }}
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1 transition-colors duration-200"
               type="button"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1317,17 +1392,23 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
             </button>
           </div>
 
-          <div className="flex justify-end gap-3 mt-6">
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
             <button
-              onClick={() => isNew ? setShowNewExperienceForm(false) : setEditingExperience(null)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              onClick={() => {
+                console.log('🔥 Cancel button clicked');
+                isNew ? setShowNewExperienceForm(false) : setEditingExperience(null);
+              }}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200"
               type="button"
             >
               Cancel
             </button>
             <button
-              onClick={handleSubmit}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              onClick={() => {
+                console.log('🔥 Save button clicked');
+                handleSubmit();
+              }}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200"
               type="button"
             >
               {isNew ? 'Add Experience' : 'Save Changes'}
@@ -1377,10 +1458,11 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 ) : (
                   <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl border border-gray-200 relative group">
                     {editingProfile && (
-                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
+                      <div className="absolute top-4 right-4 opacity-60 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
                         <button
                           onClick={() => setEditingExperience(role)}
-                          className="p-2 text-blue-600 hover:text-blue-700 bg-white rounded-full shadow-sm hover:shadow-md transition-all duration-200"
+                          className="p-2 text-blue-600 hover:text-blue-700 bg-white rounded-full shadow-sm hover:shadow-md transition-all duration-200 border border-blue-200"
+                          title="Edit experience"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -1388,7 +1470,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                         </button>
                         <button
                           onClick={() => handleRemoveExperience(index)}
-                          className="p-2 text-red-600 hover:text-red-700 bg-white rounded-full shadow-sm hover:shadow-md transition-all duration-200"
+                          className="p-2 text-red-600 hover:text-red-700 bg-white rounded-full shadow-sm hover:shadow-md transition-all duration-200 border border-red-200"
+                          title="Remove experience"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

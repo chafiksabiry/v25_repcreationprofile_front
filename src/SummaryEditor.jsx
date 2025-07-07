@@ -2529,13 +2529,15 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           <div className="mt-8">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-2xl font-bold text-gray-900">Professional Summary</h3>
-              <button
-                onClick={regenerateSummary}
-                disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50 transition-colors duration-200"
-              >
-                {loading ? '✨ Working Magic...' : '🔄 Regenerate Summary'}
-              </button>
+              {editingProfile && (
+                <button
+                  onClick={regenerateSummary}
+                  disabled={loading}
+                  className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50 transition-colors duration-200"
+                >
+                  {loading ? '✨ Working Magic...' : '🔄 Regenerate Summary'}
+                </button>
+              )}
             </div>
             {isEditing ? (
               <div className="space-y-4">
@@ -2592,17 +2594,19 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           </div>
 
           {/* Action Buttons */}
-          <div className="mt-8 flex justify-end">
-            <button
-              onClick={pushToRepsProfile}
-              className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors duration-200 flex items-center gap-2"
-            >
-              <span>🚀 View Your REPS Profile</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </button>
-          </div>
+          {!editingProfile && (
+            <div className="mt-8 flex justify-end">
+              <button
+                onClick={pushToRepsProfile}
+                className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors duration-200 flex items-center gap-2"
+              >
+                <span>🚀 View Your REPS Profile</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

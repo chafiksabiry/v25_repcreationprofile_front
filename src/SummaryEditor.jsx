@@ -106,15 +106,31 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
   useEffect(() => {
     if (profileData) {
+      console.log('🔍 Initializing editedProfile with profileData:', profileData);
+      
       setEditedProfile({
         ...profileData,
-        skills: profileData.skills || {
-          technical: [],
-          professional: [],
-          soft: []
-        }
+        skills: {
+          technical: profileData.skills?.technical || [],
+          professional: profileData.skills?.professional || [],
+          soft: profileData.skills?.soft || []
+        },
+        professionalSummary: {
+          ...profileData.professionalSummary,
+          industries: profileData.professionalSummary?.industries || [],
+          notableCompanies: profileData.professionalSummary?.notableCompanies || []
+        },
+        personalInfo: {
+          ...profileData.personalInfo,
+          languages: profileData.personalInfo?.languages || []
+        },
+        experience: profileData.experience || [],
+        availability: profileData.availability || {}
       });
+      
       setTempProfileDescription(profileData.professionalSummary?.profileDescription || '');
+      
+      console.log('🔍 EditedProfile initialized');
     }
   }, [profileData]);
 
@@ -408,54 +424,54 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   };
 
   const handleProfileChange = (field, value) => {
-    // Update the profile state immediately for UI responsiveness
-    const updatedPersonalInfo = {
-      ...editedProfile.personalInfo,
-      [field]: value
-    };
-
-    const updatedProfile = {
-      ...editedProfile,
-      personalInfo: updatedPersonalInfo
-    };
-
-    setEditedProfile(updatedProfile);
+      // Update the profile state immediately for UI responsiveness
+      const updatedPersonalInfo = {
+        ...editedProfile.personalInfo,
+        [field]: value
+      };
+  
+      const updatedProfile = {
+        ...editedProfile,
+        personalInfo: updatedPersonalInfo
+      };
+  
+      setEditedProfile(updatedProfile);
     setHasUnsavedChanges(true);
     setModifiedSections(prev => ({ ...prev, personalInfo: true }));
-
-    // Validation rules
-    const validations = {
-      name: (val) => val.trim() ? '' : 'Name is required',
+  
+      // Validation rules
+      const validations = {
+        name: (val) => val.trim() ? '' : 'Name is required',
       country: (val) => {
         const countryValue = typeof val === 'object' ? val?.countryCode : val;
         return countryValue?.trim() ? '' : 'Country is required';
       },
-      email: (val) => {
-        if (!val.trim()) return 'Email is required';
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(val) ? '' : 'Please enter a valid email address';
-      },
-      phone: (val) => {
-        if (!val.trim()) return 'Phone is required';
-        const phoneRegex = /^\+?[\d\s-]{10,}$/;
-        return phoneRegex.test(val) ? '' : 'Please enter a valid phone number';
-      },
-      languages: (val) => val.length === 0 ? 'At least one language is required' : ''
-    };
-
+        email: (val) => {
+          if (!val.trim()) return 'Email is required';
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          return emailRegex.test(val) ? '' : 'Please enter a valid email address';
+        },
+        phone: (val) => {
+          if (!val.trim()) return 'Phone is required';
+          const phoneRegex = /^\+?[\d\s-]{10,}$/;
+          return phoneRegex.test(val) ? '' : 'Please enter a valid phone number';
+        },
+        languages: (val) => val.length === 0 ? 'At least one language is required' : ''
+      };
+  
     // Get the appropriate validation function
-    const validateField = validations[field] || ((val) => val.trim() ? '' : `${field.charAt(0).toUpperCase() + field.slice(1)} is required`);
-
-    // Run validation
-    const validationError = validateField(value);
-
-    // Update validation errors state
-    setValidationErrors(prev => ({
-      ...prev,
-      [field]: validationError
-    }));
+      const validateField = validations[field] || ((val) => val.trim() ? '' : `${field.charAt(0).toUpperCase() + field.slice(1)} is required`);
+  
+      // Run validation
+      const validationError = validateField(value);
+  
+      // Update validation errors state
+      setValidationErrors(prev => ({
+        ...prev,
+        [field]: validationError
+      }));
   };
-
+  
   const addIndustry = async () => {
     if (tempIndustry.trim()) {
       try {
@@ -491,7 +507,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
   const removeIndustry = async (index) => {
     try {
-      const updatedIndustries = editedProfile.professionalSummary.industries.filter((_, i) => i !== index);
+      const updatedIndustries = (editedProfile.professionalSummary?.[type] || []).filter((_, i) => i !== index);
 
       // Set validation error if removing the last industry
       if (updatedIndustries.length === 0) {
@@ -557,7 +573,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
   const removeCompany = async (index) => {
     try {
-      const updatedCompanies = editedProfile.professionalSummary.notableCompanies.filter((_, i) => i !== index);
+      const updatedCompanies = (editedProfile.professionalSummary?.[type] || []).filter((_, i) => i !== index);
 
       // Set validation error if removing the last company
       if (updatedCompanies.length === 0) {
@@ -855,6 +871,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   };
 
   const renderSkillSection = (title, skills, type) => {
+    console.log(`🔍 renderSkillSection called:`, { title, skills, type, skillsType: typeof skills, isArray: Array.isArray(skills) });
+    
+    // Ensure skills is always an array
+    const safeSkills = Array.isArray(skills) ? skills : [];
+    
+    console.log(`🔍 safeSkills:`, safeSkills);
+
     const handleAdd = async () => {
       try {
         if (type === 'industries') {
@@ -917,7 +940,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     const handleRemove = async (index) => {
       try {
         if (type === 'industries' || type === 'notableCompanies') {
-          const updatedData = editedProfile.professionalSummary[type].filter((_, i) => i !== index);
+          const updatedData = (editedProfile.professionalSummary?.[type] || []).filter((_, i) => i !== index);
           
           // Set validation error if removing the last item
           if (updatedData.length === 0) {
@@ -971,11 +994,29 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       if (type === 'technical' || type === 'professional' || type === 'soft') {
         const currentSkills = editedProfile.skills?.[type] || [];
         
-        // Check if skill is already selected
-        const isAlreadySelected = currentSkills.some(s => s._id === skill._id);
+        // Check if skill is already selected - handle both structures
+        const isAlreadySelected = currentSkills.some(s => {
+          // Handle complex structure: s.skill._id
+          if (s.skill && typeof s.skill === 'object') {
+            return s.skill._id === skill._id;
+          }
+          // Handle direct structure: s._id
+          if (s._id) {
+            return s._id === skill._id;
+          }
+          return false;
+        });
+        
         if (isAlreadySelected) return;
         
-        const updatedSkills = [...currentSkills, skill];
+        // Create skill object with the expected structure
+        const skillObject = {
+          skill: skill,
+          level: 0,
+          details: ""
+        };
+        
+        const updatedSkills = [...currentSkills, skillObject];
         
         // Update local state
         setEditedProfile(prev => ({
@@ -1021,24 +1062,62 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         </h3>
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
-            {Array.isArray(skills) && skills.map((skill, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-purple-50 text-gray-700 rounded-full text-sm font-medium border border-gray-200 hover:shadow-md transition-shadow duration-200 group"
-              >
-                <span>{typeof skill === 'string' ? skill : skill.name || skill.skill}</span>
-                {editingProfile && (
-                  <button
-                    onClick={() => handleRemove(index)}
-                    className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-            ))}
+            {safeSkills.map((skill, index) => {
+              // Enhanced skill name extraction with better fallbacks for the real data structure
+              const getSkillName = (skillData) => {
+                console.log('🔍 getSkillName processing:', skillData);
+                
+                // Handle string skills (legacy or simple format)
+                if (typeof skillData === 'string') return skillData;
+                
+                // Handle object skills
+                if (typeof skillData === 'object' && skillData !== null) {
+                  // New structure: skill.skill.name
+                  if (skillData.skill && typeof skillData.skill === 'object') {
+                    return skillData.skill.name || skillData.skill.skill || skillData.skill.title || `Skill ${index + 1}`;
+                  }
+                  
+                  // Direct structure: skill.name
+                  if (skillData.name) {
+                    return skillData.name;
+                  }
+                  
+                  // Other possible properties
+                  if (skillData.skill && typeof skillData.skill === 'string') {
+                    return skillData.skill;
+                  }
+                  
+                  if (skillData.title) {
+                    return skillData.title;
+                  }
+                }
+                
+                // Fallback
+                return `Skill ${index + 1}`;
+              };
+
+              const skillName = getSkillName(skill);
+              console.log('🔍 Final skill name:', skillName);
+
+              return (
+                <div
+                  key={skill?.skill?._id || skill?._id || index}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-purple-50 text-gray-700 rounded-full text-sm font-medium border border-gray-200 hover:shadow-md transition-shadow duration-200 group"
+                >
+                  <span>{skillName}</span>
+                  {editingProfile && (
+                    <button
+                      onClick={() => handleRemove(index)}
+                      className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
           {type === 'industries' && renderError(validationErrors.industries, 'industries')}
           {type === 'notableCompanies' && renderError(validationErrors.companies, 'companies')}
@@ -1076,7 +1155,33 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                             {/* Skills in this category */}
                             <div className="bg-gray-50/30">
                               {categorySkills.map((skill, skillIndex) => {
-                                const isSelected = skills?.some(s => s._id === skill._id);
+                                // Enhanced skill selection detection for complex structure
+                                const isSelected = safeSkills.some(s => {
+                                  console.log('🔍 Checking if skill is selected:', { s, skill });
+                                  
+                                  // Handle string skills (legacy)
+                                  if (typeof s === 'string' && typeof skill === 'object') {
+                                    return s === skill.name || s === skill.skill;
+                                  }
+                                  
+                                  // Handle complex structure: s.skill._id === skill._id
+                                  if (s.skill && typeof s.skill === 'object' && typeof skill === 'object') {
+                                    return s.skill._id === skill._id || s.skill.name === skill.name;
+                                  }
+                                  
+                                  // Handle direct structure: s._id === skill._id
+                                  if (typeof s === 'object' && typeof skill === 'object') {
+                                    return s._id === skill._id || s.name === skill.name;
+                                  }
+                                  
+                                  // Handle string comparisons
+                                  if (typeof s === 'string' && typeof skill === 'string') {
+                                    return s === skill;
+                                  }
+                                  
+                                  return false;
+                                });
+                                
                                 return (
                                   <button
                                     key={skill._id}
@@ -1123,28 +1228,28 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 </div>
               ) : (
                 <>
-                  <input
-                    type="text"
-                    value={getTempValue()}
-                    onChange={(e) => handleTempChange(e.target.value)}
-                    className="flex-1 p-2 border rounded-md bg-white/50"
-                    placeholder={`Add ${title.toLowerCase()}`}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAdd();
-                      }
-                    }}
-                  />
-                  <button
-                    onClick={handleAdd}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 flex items-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add
-                  </button>
+              <input
+                type="text"
+                value={getTempValue()}
+                onChange={(e) => handleTempChange(e.target.value)}
+                className="flex-1 p-2 border rounded-md bg-white/50"
+                placeholder={`Add ${title.toLowerCase()}`}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAdd();
+                  }
+                }}
+              />
+              <button
+                onClick={handleAdd}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add
+              </button>
                 </>
               )}
             </div>
@@ -1194,8 +1299,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         setFormData(prev => {
           console.log(`🔥 Previous formData:`, prev);
           const newData = {
-            ...prev,
-            [field]: value
+          ...prev,
+          [field]: value
           };
           console.log(`🔥 New formData:`, newData);
           return newData;
@@ -1209,8 +1314,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         setFormData(prev => {
           console.log(`🔥 Previous formData:`, prev);
           const newData = {
-            ...prev,
-            responsibilities: updatedResponsibilities
+          ...prev,
+          responsibilities: updatedResponsibilities
           };
           console.log(`🔥 New formData:`, newData);
           return newData;
@@ -1222,8 +1327,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         setFormData(prev => {
           console.log(`🔥 Previous formData:`, prev);
           const newData = {
-            ...prev,
-            responsibilities: [...prev.responsibilities, '']
+          ...prev,
+          responsibilities: [...prev.responsibilities, '']
           };
           console.log(`🔥 New formData:`, newData);
           return newData;
@@ -1236,8 +1341,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           setFormData(prev => {
             console.log(`🔥 Previous formData:`, prev);
             const newData = {
-              ...prev,
-              responsibilities: prev.responsibilities.filter((_, i) => i !== index)
+          ...prev,
+          responsibilities: prev.responsibilities.filter((_, i) => i !== index)
             };
             console.log(`🔥 New formData:`, newData);
             return newData;
@@ -1361,19 +1466,19 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   autoComplete="off"
                 />
                 {formData.responsibilities.length > 1 && (
-                  <button
+                <button
                     onClick={() => {
                       console.log(`🔥 Remove responsibility ${index} button clicked`);
                       removeResponsibilityField(index);
                     }}
                     className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors duration-200"
-                    type="button"
+                  type="button"
                     title="Remove responsibility"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
                 )}
               </div>
             ))}
@@ -1587,7 +1692,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   const handleRemoveExperience = async (index) => {
     try {
       const updatedExperiences = editedProfile.experience.filter((_, i) => i !== index);
-      
+
       // Local update only
       setEditedProfile(prev => ({
         ...prev,
@@ -1623,26 +1728,26 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
   // NEW: Local availability change handler
   const handleAvailabilityChangeLocal = (field, value) => {
-    let updatedAvailability;
-    
-    if (field === 'schedule') {
-      // Handle schedule updates
-      updatedAvailability = {
-        ...editedProfile.availability,
-        schedule: value
-      };
-    } else if (field === 'timeZone' || field === 'flexibility') {
-      // Handle single field updates
-      updatedAvailability = {
-        ...editedProfile.availability,
-        [field]: value
-      };
-    }
+      let updatedAvailability;
+      
+      if (field === 'schedule') {
+        // Handle schedule updates
+        updatedAvailability = {
+          ...editedProfile.availability,
+          schedule: value
+        };
+      } else if (field === 'timeZone' || field === 'flexibility') {
+        // Handle single field updates
+        updatedAvailability = {
+          ...editedProfile.availability,
+          [field]: value
+        };
+      }
 
-    setEditedProfile(prev => ({
-      ...prev,
-      availability: updatedAvailability
-    }));
+      setEditedProfile(prev => ({
+        ...prev,
+        availability: updatedAvailability
+      }));
     
     setHasUnsavedChanges(true);
     setModifiedSections(prev => ({ ...prev, availability: true }));
@@ -1709,6 +1814,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
   // NEW: Reset modification flags when canceling edit
   const cancelEdit = () => {
+    console.log('🔍 Canceling edit, resetting to original profileData:', profileData);
+    
     setEditingProfile(false);
     setHasUnsavedChanges(false);
     setModifiedSections({
@@ -1718,8 +1825,31 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       availability: false,
       experience: false
     });
-    // Reset to original profile data
-    setEditedProfile(profileData);
+    
+    // Reset to original profile data with safe defaults
+    if (profileData) {
+      setEditedProfile({
+        ...profileData,
+        skills: {
+          technical: profileData.skills?.technical || [],
+          professional: profileData.skills?.professional || [],
+          soft: profileData.skills?.soft || []
+        },
+        professionalSummary: {
+          ...profileData.professionalSummary,
+          industries: profileData.professionalSummary?.industries || [],
+          notableCompanies: profileData.professionalSummary?.notableCompanies || []
+        },
+        personalInfo: {
+          ...profileData.personalInfo,
+          languages: profileData.personalInfo?.languages || []
+        },
+        experience: profileData.experience || [],
+        availability: profileData.availability || {}
+      });
+    }
+    
+    console.log('🔍 Edit canceled, profile reset');
   };
 
   return (
@@ -1738,7 +1868,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               
               {editingProfile ? (
                 <div className="flex items-center gap-2">
-                  <button
+            <button
                     onClick={cancelEdit}
                     disabled={isSaving}
                     className="px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-gray-600 bg-gray-50 hover:bg-gray-100 disabled:opacity-50"
@@ -1761,7 +1891,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     ) : (
                       '💾 Save'
                     )}
-                  </button>
+            </button>
                 </div>
               ) : (
                 <button
@@ -1792,8 +1922,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">🌍 Country</h3>
                   <div className="relative country-selector">
-                    <input
-                      type="text"
+                  <input
+                    type="text"
                       value={isSearching ? countrySearch : (typeof editedProfile.personalInfo.country === 'object' 
                         ? `${editedProfile.personalInfo.country?.countryName} (${editedProfile.personalInfo.country?.countryCode})`
                         : editedProfile.personalInfo.country || '')}
@@ -2090,11 +2220,11 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
           {/* Skills Sections */}
           <div className="space-y-6">
-            {renderSkillSection('Technical Skills', editedProfile.skills.technical, 'technical')}
-            {renderSkillSection('Professional Skills', editedProfile.skills.professional, 'professional')}
-            {renderSkillSection('Soft Skills', editedProfile.skills.soft, 'soft')}
-            {renderSkillSection('Industries', editedProfile.professionalSummary.industries, 'industries')}
-            {renderSkillSection('Notable Companies', editedProfile.professionalSummary.notableCompanies, 'notableCompanies')}
+            {renderSkillSection('Technical Skills', editedProfile.skills?.technical || [], 'technical')}
+            {renderSkillSection('Professional Skills', editedProfile.skills?.professional || [], 'professional')}
+            {renderSkillSection('Soft Skills', editedProfile.skills?.soft || [], 'soft')}
+            {renderSkillSection('Industries', editedProfile.professionalSummary?.industries || [], 'industries')}
+            {renderSkillSection('Notable Companies', editedProfile.professionalSummary?.notableCompanies || [], 'notableCompanies')}
           </div>
 
           {/* Availability Section */}

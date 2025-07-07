@@ -1004,6 +1004,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
       const newSummary = response.choices[0].message.content;
       
+      // Update only local state, don't save to database yet
       setEditedSummary(newSummary);
       setEditedProfile(prev => ({
         ...prev,
@@ -1013,15 +1014,11 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         }
       }));
 
-      await updateProfileData(editedProfile._id, {
-        professionalSummary: {
-          ...editedProfile.professionalSummary,
-          profileDescription: newSummary
-        }
-      });
-
+      // Mark as having unsaved changes
+      setHasUnsavedChanges(true);
+      setModifiedSections(prev => ({ ...prev, professionalSummary: true }));
       setIsEditing(false);
-      showToast('Professional summary has been regenerated successfully!');
+      showToast('Professional summary has been regenerated! Click Save to apply changes.');
       
     } catch (error) {
       console.error('Failed to regenerate summary:', error);
@@ -1031,27 +1028,20 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     }
   };
 
-  const handleSaveSummary = async () => {
-    try {
-      await updateProfileData(editedProfile._id, {
-        professionalSummary: {
-          ...editedProfile.professionalSummary,
-          profileDescription: editedSummary
-        }
-      });
+  const handleSummaryChange = (newSummary) => {
+    // Update only local state
+    setEditedSummary(newSummary);
+    setEditedProfile(prev => ({
+      ...prev,
+      professionalSummary: {
+        ...prev.professionalSummary,
+        profileDescription: newSummary
+      }
+    }));
 
-      setEditedProfile(prev => ({
-        ...prev,
-        professionalSummary: {
-          ...prev.professionalSummary,
-          profileDescription: editedSummary
-        }
-      }));
-
-      setIsEditing(false);
-    } catch (error) {
-      console.error('Error saving summary:', error);
-    }
+    // Mark as having unsaved changes
+    setHasUnsavedChanges(true);
+    setModifiedSections(prev => ({ ...prev, professionalSummary: true }));
   };
 
   const pushToRepsProfile = () => {
@@ -1848,6 +1838,9 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         experience: profileData.experience || [],
         availability: profileData.availability || {}
       });
+      
+      // Reset the edited summary to the original
+      setEditedSummary(profileData.professionalSummary?.profileDescription || '');
     }
     
     console.log('🔍 Edit canceled, profile reset');
@@ -2548,14 +2541,23 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               <div className="space-y-4">
                 <textarea
                   value={editedSummary}
-                  onChange={(e) => setEditedSummary(e.target.value)}
+                  onChange={(e) => handleSummaryChange(e.target.value)}
                   className="w-full h-64 p-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Edit your professional summary..."
                 />
                 <div className="flex justify-end space-x-3">
                   <button
                     onClick={() => {
-                      setEditedSummary(editedProfile.professionalSummary?.profileDescription || '');
+                      // Reset to the original value without marking as modified
+                      const originalSummary = profileData?.professionalSummary?.profileDescription || '';
+                      setEditedSummary(originalSummary);
+                      setEditedProfile(prev => ({
+                        ...prev,
+                        professionalSummary: {
+                          ...prev.professionalSummary,
+                          profileDescription: originalSummary
+                        }
+                      }));
                       setIsEditing(false);
                     }}
                     className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
@@ -2563,10 +2565,10 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     Cancel
                   </button>
                   <button
-                    onClick={handleSaveSummary}
+                    onClick={() => setIsEditing(false)}
                     className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:from-blue-700 hover:to-purple-700"
                   >
-                    Save Changes
+                    Done Editing
                   </button>
                 </div>
               </div>

@@ -28,6 +28,251 @@ if (!document.getElementById('summary-editor-styles')) {
   document.head.appendChild(styleSheet);
 }
 
+// Move ExperienceForm outside the main component
+const ExperienceForm = ({ experience, onSubmit, isNew = false }) => {
+  console.log('ExperienceForm rendered with:', { experience, isNew });
+  
+  const [formData, setFormData] = useState({
+    title: experience.title || '',
+    company: experience.company || '',
+    startDate: experience.startDate ? new Date(experience.startDate).toISOString().split('T')[0] : '',
+    endDate: experience.endDate && experience.endDate !== 'present' ? new Date(experience.endDate).toISOString().split('T')[0] : '',
+    responsibilities: experience.responsibilities || [''],
+    isPresent: experience.endDate === 'present' || experience.isPresent || false
+  });
+
+  // Add useEffect to sync with props changes
+  useEffect(() => {
+    setFormData({
+      title: experience.title || '',
+      company: experience.company || '',
+      startDate: experience.startDate ? new Date(experience.startDate).toISOString().split('T')[0] : '',
+      endDate: experience.endDate && experience.endDate !== 'present' ? new Date(experience.endDate).toISOString().split('T')[0] : '',
+      responsibilities: experience.responsibilities || [''],
+      isPresent: experience.endDate === 'present' || experience.isPresent || false
+    });
+  }, [experience]);
+
+  console.log('ExperienceForm formData:', formData);
+
+  const handleInputChange = (field, value) => {
+    console.log(`🔥 handleInputChange called: field=${field}, value=${value}`);
+    setFormData(prev => {
+      console.log(`🔥 Previous formData:`, prev);
+      const newData = {
+        ...prev,
+        [field]: value
+      };
+      console.log(`🔥 New formData:`, newData);
+      return newData;
+    });
+  };
+
+  const handleResponsibilityChange = (index, value) => {
+    console.log(`🔥 handleResponsibilityChange called: index=${index}, value=${value}`);
+    const updatedResponsibilities = [...formData.responsibilities];
+    updatedResponsibilities[index] = value;
+    setFormData(prev => {
+      console.log(`🔥 Previous formData:`, prev);
+      const newData = {
+        ...prev,
+        responsibilities: updatedResponsibilities
+      };
+      console.log(`🔥 New formData:`, newData);
+      return newData;
+    });
+  };
+
+  const addResponsibilityField = () => {
+    console.log('🔥 addResponsibilityField called');
+    setFormData(prev => {
+      console.log(`🔥 Previous formData:`, prev);
+      const newData = {
+        ...prev,
+        responsibilities: [...prev.responsibilities, '']
+      };
+      console.log(`🔥 New formData:`, newData);
+      return newData;
+    });
+  };
+
+  const removeResponsibilityField = (index) => {
+    console.log(`🔥 removeResponsibilityField called: index=${index}`);
+    if (formData.responsibilities.length > 1) {
+      setFormData(prev => {
+        console.log(`🔥 Previous formData:`, prev);
+        const newData = {
+          ...prev,
+          responsibilities: prev.responsibilities.filter((_, i) => i !== index)
+        };
+        console.log(`🔥 New formData:`, newData);
+        return newData;
+      });
+    }
+  };
+
+  const handleSubmit = () => {
+    console.log('Form data before submission:', formData);
+    
+    // Convert dates to proper format before submitting
+    const experienceData = {
+      ...formData,
+      startDate: formData.startDate, // Keep as YYYY-MM-DD string
+      endDate: formData.isPresent ? 'present' : formData.endDate // Keep as YYYY-MM-DD string or 'present'
+    };
+
+    console.log('Experience data being submitted:', experienceData);
+    onSubmit(experienceData);
+  };
+
+  return (
+    <div className="space-y-4 bg-white p-6 rounded-xl shadow-sm border border-gray-200 relative z-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+          <input
+            type="text"
+            value={formData.title}
+            onChange={(e) => {
+              console.log('🔥 Title input onChange event:', e.target.value);
+              handleInputChange('title', e.target.value);
+            }}
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            placeholder="e.g. Software Engineer"
+            autoComplete="off"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+          <input
+            type="text"
+            value={formData.company}
+            onChange={(e) => {
+              console.log('🔥 Company input onChange event:', e.target.value);
+              handleInputChange('company', e.target.value);
+            }}
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            placeholder="e.g. Tech Corp"
+            autoComplete="off"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+          <input
+            type="date"
+            value={formData.startDate}
+            onChange={(e) => {
+              console.log('🔥 Start Date input onChange event:', e.target.value);
+              handleInputChange('startDate', e.target.value);
+            }}
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={formData.endDate}
+              onChange={(e) => {
+                console.log('🔥 End Date input onChange event:', e.target.value);
+                handleInputChange('endDate', e.target.value);
+              }}
+              disabled={formData.isPresent}
+              className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed bg-white"
+            />
+            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.isPresent}
+                onChange={(e) => {
+                  console.log('🔥 Present checkbox onChange event:', e.target.checked);
+                  handleInputChange('isPresent', e.target.checked);
+                  if (e.target.checked) {
+                    handleInputChange('endDate', '');
+                  }
+                }}
+                className="rounded border-gray-300 cursor-pointer"
+              />
+              Present
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <label className="block text-sm font-medium text-gray-700">Responsibilities</label>
+        {formData.responsibilities.map((resp, index) => (
+          <div key={index} className="flex gap-2 items-center">
+            <input
+              type="text"
+              value={resp}
+              onChange={(e) => {
+                console.log(`🔥 Responsibility ${index} input onChange event:`, e.target.value);
+                handleResponsibilityChange(index, e.target.value);
+              }}
+              className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              placeholder="Add a responsibility"
+              autoComplete="off"
+            />
+            {formData.responsibilities.length > 1 && (
+              <button
+                onClick={() => {
+                  console.log(`🔥 Remove responsibility ${index} button clicked`);
+                  removeResponsibilityField(index);
+                }}
+                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors duration-200"
+                type="button"
+                title="Remove responsibility"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          onClick={() => {
+            console.log('🔥 Add responsibility button clicked');
+            addResponsibilityField();
+          }}
+          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1 transition-colors duration-200"
+          type="button"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Add Responsibility
+        </button>
+      </div>
+
+      <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+        <button
+          onClick={() => {
+            console.log('🔥 Cancel button clicked');
+            // Handle cancel logic here
+          }}
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+          type="button"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => {
+            console.log('🔥 Save button clicked');
+            handleSubmit();
+          }}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          type="button"
+        >
+          {isNew ? 'Add Experience' : 'Save Changes'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onProfileUpdate }) {
   const { profile, loading: profileLoading, error: profileError, updateBasicInfo, updateExperience, updateSkills, updateProfileData } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
@@ -1277,250 +1522,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         console.error('Error formatting date:', error);
         return date;
       }
-    };
-
-    const ExperienceForm = ({ experience, onSubmit, isNew = false }) => {
-      console.log('ExperienceForm rendered with:', { experience, isNew });
-      console.log('editingProfile state:', editingProfile);
-      
-      const [formData, setFormData] = useState({
-        title: experience.title || '',
-        company: experience.company || '',
-        startDate: experience.startDate ? new Date(experience.startDate).toISOString().split('T')[0] : '',
-        endDate: experience.endDate && experience.endDate !== 'present' ? new Date(experience.endDate).toISOString().split('T')[0] : '',
-        responsibilities: experience.responsibilities || [''],
-        isPresent: experience.endDate === 'present' || experience.isPresent || false
-      });
-
-      console.log('ExperienceForm formData:', formData);
-
-      const handleInputChange = (field, value) => {
-        console.log(`🔥 handleInputChange called: field=${field}, value=${value}`);
-        setFormData(prev => {
-          console.log(`🔥 Previous formData:`, prev);
-          const newData = {
-          ...prev,
-          [field]: value
-          };
-          console.log(`🔥 New formData:`, newData);
-          return newData;
-        });
-      };
-
-      const handleResponsibilityChange = (index, value) => {
-        console.log(`🔥 handleResponsibilityChange called: index=${index}, value=${value}`);
-        const updatedResponsibilities = [...formData.responsibilities];
-        updatedResponsibilities[index] = value;
-        setFormData(prev => {
-          console.log(`🔥 Previous formData:`, prev);
-          const newData = {
-          ...prev,
-          responsibilities: updatedResponsibilities
-          };
-          console.log(`🔥 New formData:`, newData);
-          return newData;
-        });
-      };
-
-      const addResponsibilityField = () => {
-        console.log('🔥 addResponsibilityField called');
-        setFormData(prev => {
-          console.log(`🔥 Previous formData:`, prev);
-          const newData = {
-          ...prev,
-          responsibilities: [...prev.responsibilities, '']
-          };
-          console.log(`🔥 New formData:`, newData);
-          return newData;
-        });
-      };
-
-      const removeResponsibilityField = (index) => {
-        console.log(`🔥 removeResponsibilityField called: index=${index}`);
-        if (formData.responsibilities.length > 1) {
-          setFormData(prev => {
-            console.log(`🔥 Previous formData:`, prev);
-            const newData = {
-          ...prev,
-          responsibilities: prev.responsibilities.filter((_, i) => i !== index)
-            };
-            console.log(`🔥 New formData:`, newData);
-            return newData;
-          });
-        }
-      };
-
-      const handleSubmit = () => {
-        console.log('Form data before submission:', formData);
-        
-        // Convert dates to proper format before submitting
-        const experienceData = {
-          ...formData,
-          startDate: formData.startDate, // Keep as YYYY-MM-DD string
-          endDate: formData.isPresent ? 'present' : formData.endDate // Keep as YYYY-MM-DD string or 'present'
-        };
-
-        console.log('Experience data being submitted:', experienceData);
-        onSubmit(experienceData);
-      };
-
-      return (
-        <div className="space-y-4 bg-white p-6 rounded-xl shadow-sm border border-gray-200 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => {
-                  console.log('🔥 Title input onChange event:', e.target.value);
-                  handleInputChange('title', e.target.value);
-                }}
-                onClick={() => console.log('🔥 Title input clicked')}
-                onFocus={() => console.log('🔥 Title input focused')}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                placeholder="e.g. Software Engineer"
-                autoComplete="off"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
-              <input
-                type="text"
-                value={formData.company}
-                onChange={(e) => {
-                  console.log('🔥 Company input onChange event:', e.target.value);
-                  handleInputChange('company', e.target.value);
-                }}
-                onClick={() => console.log('🔥 Company input clicked')}
-                onFocus={() => console.log('🔥 Company input focused')}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                placeholder="e.g. Tech Corp"
-                autoComplete="off"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-              <input
-                type="date"
-                value={formData.startDate}
-                onChange={(e) => {
-                  console.log('🔥 Start Date input onChange event:', e.target.value);
-                  handleInputChange('startDate', e.target.value);
-                }}
-                onClick={() => console.log('🔥 Start Date input clicked')}
-                onFocus={() => console.log('🔥 Start Date input focused')}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => {
-                    console.log('🔥 End Date input onChange event:', e.target.value);
-                    handleInputChange('endDate', e.target.value);
-                  }}
-                  onClick={() => console.log('🔥 End Date input clicked')}
-                  onFocus={() => console.log('🔥 End Date input focused')}
-                  disabled={formData.isPresent}
-                  className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed bg-white"
-                />
-                <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isPresent}
-                    onChange={(e) => {
-                      console.log('🔥 Present checkbox onChange event:', e.target.checked);
-                      handleInputChange('isPresent', e.target.checked);
-                      if (e.target.checked) {
-                        handleInputChange('endDate', '');
-                      }
-                    }}
-                    onClick={() => console.log('🔥 Present checkbox clicked')}
-                    className="rounded border-gray-300 cursor-pointer"
-                  />
-                  Present
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <label className="block text-sm font-medium text-gray-700">Responsibilities</label>
-            {formData.responsibilities.map((resp, index) => (
-              <div key={index} className="flex gap-2 items-center">
-                <input
-                  type="text"
-                  value={resp}
-                  onChange={(e) => {
-                    console.log(`🔥 Responsibility ${index} input onChange event:`, e.target.value);
-                    handleResponsibilityChange(index, e.target.value);
-                  }}
-                  onClick={() => console.log(`🔥 Responsibility ${index} input clicked`)}
-                  onFocus={() => console.log(`🔥 Responsibility ${index} input focused`)}
-                  className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                  placeholder="Add a responsibility"
-                  autoComplete="off"
-                />
-                {formData.responsibilities.length > 1 && (
-                <button
-                    onClick={() => {
-                      console.log(`🔥 Remove responsibility ${index} button clicked`);
-                      removeResponsibilityField(index);
-                    }}
-                    className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors duration-200"
-                  type="button"
-                    title="Remove responsibility"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-                )}
-              </div>
-            ))}
-            <button
-              onClick={() => {
-                console.log('🔥 Add responsibility button clicked');
-                addResponsibilityField();
-              }}
-              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1 transition-colors duration-200"
-              type="button"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Add Responsibility
-            </button>
-          </div>
-
-          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
-            <button
-              onClick={() => {
-                console.log('🔥 Cancel button clicked');
-                isNew ? setShowNewExperienceForm(false) : setEditingExperience(null);
-              }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200"
-              type="button"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => {
-                console.log('🔥 Save button clicked');
-                handleSubmit();
-              }}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200"
-              type="button"
-            >
-              {isNew ? 'Add Experience' : 'Save Changes'}
-            </button>
-          </div>
-        </div>
-      );
     };
 
     return (

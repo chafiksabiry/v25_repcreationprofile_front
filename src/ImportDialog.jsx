@@ -3,6 +3,8 @@ import { Dialog } from '@headlessui/react';
 import OpenAI from 'openai';
 import { CVParser } from './lib/parsers/cvParser';
 import { useProfile } from './hooks/useProfile';
+import { useUserLocation } from './hooks/useUserLocation';
+import { convertLocationToCountryObject } from './lib/utils/countryUtils';
 
 import { chunkText, safeJSONParse, retryOperation } from './lib/utils/textProcessing';
 
@@ -13,6 +15,7 @@ const openai = new OpenAI({
 
 function ImportDialog({ isOpen, onClose, onImport }) {
   const { createProfile } = useProfile();
+  const { getUserLocation } = useUserLocation();
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -123,6 +126,21 @@ function ImportDialog({ isOpen, onClose, onImport }) {
 
       addAnalysisStep("Starting CV analysis...");
 
+      // Get user location from IP before processing CV
+      let ipCountryCode = null;
+      try {
+        const userLocation = await getUserLocation();
+        if (userLocation?.locationInfo?.countryCode) {
+          ipCountryCode = userLocation.locationInfo.countryCode;
+          addAnalysisStep(`Detected country from IP: ${ipCountryCode}`);
+        } else {
+          addAnalysisStep("Could not detect country from IP, will extract from CV");
+        }
+      } catch (locationError) {
+        console.error('Error fetching location:', locationError);
+        addAnalysisStep("Could not detect country from IP, will extract from CV");
+      }
+
       // Initial analysis to extract basic information
       const basicInfoResponse = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
@@ -132,7 +150,7 @@ function ImportDialog({ isOpen, onClose, onImport }) {
             content: `You are an expert CV analyzer. Extract the following basic information from the CV and return it in the exact JSON format shown below:
             {
               "name": "string",
-              "country": "string (MUST be the 2-letter ISO country code as used by timezoneDB API - e.g., 'FR' for France, 'GB' for United Kingdom, 'US' for United States, 'SS' for South Sudan, 'DE' for Germany, 'CA' for Canada, etc.)",
+              "country": "string (MUST be the 2-letter ISO country code as used by timezoneDB API - e.g., 'FR' for France, 'GB' for United Kingdom, 'US' for United States, 'SS' for South Sudan, 'DE' for Germany, 'CA' for Canada, etc. ${ipCountryCode ? `If no country is explicitly mentioned in the CV, use: "${ipCountryCode}"` : ''})",
               "email": "string",
               "phone": "string",
               "currentRole": "string",
@@ -149,6 +167,13 @@ function ImportDialog({ isOpen, onClose, onImport }) {
       });
 
       const basicInfo = JSON.parse(basicInfoResponse.choices[0].message.content);
+      
+      // Override with IP country code if available and valid
+      if (ipCountryCode && ipCountryCode.trim()) {
+        basicInfo.country = ipCountryCode;
+        addAnalysisStep(`Using IP-detected country: ${ipCountryCode}`);
+      }
+      
       addAnalysisStep("Basic information extracted");
       setProgress(20);
 

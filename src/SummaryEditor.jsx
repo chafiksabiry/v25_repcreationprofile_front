@@ -2299,6 +2299,25 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                       : editedProfile.personalInfo.country || 'Not specified'}
                   </p>
                   {renderError(validationErrors.country, 'country')}
+                  
+                  {/* Country Mismatch Warning for Read-only View */}
+                  {showMismatchWarning && ipDetectedCountry && (
+                    <div className="mt-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <svg className="w-5 h-5 text-amber-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        <div>
+                          <p className="text-sm font-medium text-amber-800">
+                            Country Mismatch Detected
+                          </p>
+                          <p className="text-xs text-amber-700 mt-1">
+                            Your profile country differs from what we detected based on your IP address ({ipDetectedCountry.countryName}). This may be due to VPN usage or if you've moved to a different country.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">📧 Email</h3>

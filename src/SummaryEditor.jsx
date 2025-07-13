@@ -48,7 +48,7 @@ if (!document.getElementById('summary-editor-styles')) {
 // API function to get user's IP history
 const getUserIPHistory = async (userId) => {
   try {
-    const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:5000/api';
+    const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL;
     const token = localStorage.getItem('token');
     
     const response = await axios.get(`${AUTH_API_URL}/users/${userId}/ip-history`, {

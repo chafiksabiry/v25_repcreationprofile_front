@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useProfile } from './hooks/useProfile';
-import { useUserLocation } from './hooks/useUserLocation';
-import { convertLocationToCountryObject, findCountryByCode } from './lib/utils/countryUtils';
 import openaiClient from './lib/ai/openaiClient';
 import { OpenAI } from 'openai';
 import { getLanguageCodeFromAI } from './lib/utils/textProcessing';
@@ -277,7 +275,6 @@ const ExperienceForm = ({ experience, onSubmit, isNew = false }) => {
 
 function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onProfileUpdate }) {
   const { profile, loading: profileLoading, error: profileError, updateBasicInfo, updateExperience, updateSkills, updateProfileData } = useProfile();
-  const { getUserLocation, countryObject: ipCountryObject } = useUserLocation();
   const [isEditing, setIsEditing] = useState(false);
   console.log("generatedSummary : ", generatedSummary);
   const [editedSummary, setEditedSummary] = useState(generatedSummary);
@@ -342,10 +339,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     availability: false,
     experience: false
   });
-  // IP-based country detection state
-  const [ipDetectedCountry, setIpDetectedCountry] = useState(null); // Store IP detected country for comparison
-  const [showMismatchWarning, setShowMismatchWarning] = useState(false);
-  const [showIpSuggestion, setShowIpSuggestion] = useState(false);
 
   const proficiencyLevels = [
     { value: 'A1', label: 'A1 - Beginner', description: 'Can understand and use basic phrases, introduce themselves' },
@@ -448,51 +441,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     loadCountries();
   }, []);
 
-  // IP-based country detection - one-time check on load
-  useEffect(() => {
-    const detectIPCountryAndCompare = async () => {
-      try {
-        // Only run once when component loads and we have countries data
-        if (countries.length === 0 || ipDetectedCountry !== null) {
-          return;
-        }
-
-        const userLocation = await getUserLocation();
-        if (userLocation?.locationInfo?.countryCode) {
-          const ipCountryCode = userLocation.locationInfo.countryCode;
-          console.log('IP country detected:', ipCountryCode);
-          
-          // Find the country object in our countries list
-          const matchingCountry = countries.find(country => 
-            country.countryCode && country.countryCode.toLowerCase() === ipCountryCode.toLowerCase()
-          );
-          
-          if (matchingCountry) {
-            setIpDetectedCountry(matchingCountry);
-            console.log('IP detected country stored:', matchingCountry);
-            
-            // Compare with user's current country
-            const currentCountry = editedProfile.personalInfo?.country;
-            if (currentCountry && currentCountry.countryCode && 
-                currentCountry.countryCode.toLowerCase() !== ipCountryCode.toLowerCase()) {
-              
-              console.log('Country mismatch detected on load');
-              setShowMismatchWarning(true);
-            }
-          } else {
-            console.log('IP country code not found in available countries list:', ipCountryCode);
-          }
-        } else {
-          console.log('No IP location data available');
-        }
-      } catch (error) {
-        console.error('Error detecting IP country:', error);
-      }
-    };
-
-    detectIPCountryAndCompare();
-  }, [countries, editedProfile.personalInfo?.country, getUserLocation]);
-
   // Load skills from API
   useEffect(() => {
     const loadSkills = async () => {
@@ -555,14 +503,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     setCountrySearch('');
     setIsSearching(false);
     handleProfileChange('country', country);
-    
-    // Check if selected country matches IP-detected country
-    if (ipDetectedCountry && country.countryCode && 
-        country.countryCode.toLowerCase() !== ipDetectedCountry.countryCode.toLowerCase()) {
-      setShowMismatchWarning(true);
-    } else {
-      setShowMismatchWarning(false);
-    }
     
     // Auto-suggest timezone based on country
     suggestTimezoneForCountry(country);
@@ -2087,25 +2027,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                      )}
                   </div>
                   {renderError(validationErrors.country, 'country')}
-                  
-                  {/* Country Mismatch Warning */}
-                  {showMismatchWarning && ipDetectedCountry && (
-                    <div className="mt-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
-                      <div className="flex items-start gap-2">
-                        <svg className="w-5 h-5 text-amber-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
-                        </svg>
-                        <div>
-                          <p className="text-sm font-medium text-amber-800">
-                            Country Mismatch Detected
-                          </p>
-                          <p className="text-xs text-amber-700 mt-1">
-                            Your selected country differs from what we detected based on your IP address ({ipDetectedCountry.countryName}). This may be due to VPN usage or if you've moved to a different country.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">📧 Email</h3>
@@ -2299,25 +2220,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                       : editedProfile.personalInfo.country || 'Not specified'}
                   </p>
                   {renderError(validationErrors.country, 'country')}
-                  
-                  {/* Country Mismatch Warning for Read-only View */}
-                  {showMismatchWarning && ipDetectedCountry && (
-                    <div className="mt-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
-                      <div className="flex items-start gap-2">
-                        <svg className="w-5 h-5 text-amber-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
-                        </svg>
-                        <div>
-                          <p className="text-sm font-medium text-amber-800">
-                            Country Mismatch Detected
-                          </p>
-                          <p className="text-xs text-amber-700 mt-1">
-                            Your profile country differs from what we detected based on your IP address ({ipDetectedCountry.countryName}). This may be due to VPN usage or if you've moved to a different country.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">📧 Email</h3>

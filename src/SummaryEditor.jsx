@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useProfile } from './hooks/useProfile';
-import { useUserLocation } from './hooks/useUserLocation';
-import { convertLocationToCountryObject, findCountryByCode } from './lib/utils/countryUtils';
 import openaiClient from './lib/ai/openaiClient';
 import { OpenAI } from 'openai';
 import { getLanguageCodeFromAI } from './lib/utils/textProcessing';
@@ -277,7 +275,6 @@ const ExperienceForm = ({ experience, onSubmit, isNew = false }) => {
 
 function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onProfileUpdate }) {
   const { profile, loading: profileLoading, error: profileError, updateBasicInfo, updateExperience, updateSkills, updateProfileData } = useProfile();
-  const { getUserLocation, countryObject: ipCountryObject } = useUserLocation();
   const [isEditing, setIsEditing] = useState(false);
   console.log("generatedSummary : ", generatedSummary);
   const [editedSummary, setEditedSummary] = useState(generatedSummary);
@@ -342,9 +339,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     availability: false,
     experience: false
   });
-  // IP-based country detection state
-  const [ipCountrySuggestion, setIpCountrySuggestion] = useState(null);
-  const [showIpSuggestion, setShowIpSuggestion] = useState(false);
 
   const proficiencyLevels = [
     { value: 'A1', label: 'A1 - Beginner', description: 'Can understand and use basic phrases, introduce themselves' },
@@ -446,62 +440,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
     loadCountries();
   }, []);
-
-  // IP-based country detection
-  useEffect(() => {
-    const detectIPCountry = async () => {
-      try {
-        // Only suggest if user hasn't set a country yet
-        if (editedProfile.personalInfo?.country) {
-          console.log('Country already set, skipping IP detection');
-          return;
-        }
-
-        const userLocation = await getUserLocation();
-        if (userLocation?.locationInfo?.countryCode) {
-          const ipCountryCode = userLocation.locationInfo.countryCode;
-          console.log('IP country detected:', ipCountryCode);
-          
-          // Find the country object in our countries list
-          const matchingCountry = countries.find(country => 
-            country.countryCode && country.countryCode.toLowerCase() === ipCountryCode.toLowerCase()
-          );
-          
-          if (matchingCountry) {
-            setIpCountrySuggestion(matchingCountry);
-            setShowIpSuggestion(true);
-            console.log('IP country suggestion ready:', matchingCountry);
-          } else {
-            console.log('IP country code not found in available countries list:', ipCountryCode);
-          }
-        } else {
-          console.log('No IP location data available');
-        }
-      } catch (error) {
-        console.error('Error detecting IP country:', error);
-      }
-    };
-
-    // Only run IP detection if we have countries loaded and no country is set
-    if (countries.length > 0 && !editedProfile.personalInfo?.country) {
-      detectIPCountry();
-    }
-  }, [countries, editedProfile.personalInfo?.country, getUserLocation]);
-
-  // Function to accept IP country suggestion
-  const acceptIPCountrySuggestion = () => {
-    if (ipCountrySuggestion) {
-      handleCountrySelect(ipCountrySuggestion);
-      setShowIpSuggestion(false);
-      showToast(`Country set to ${ipCountrySuggestion.countryName} based on your IP location`, 'success');
-    }
-  };
-
-  // Function to dismiss IP country suggestion
-  const dismissIPCountrySuggestion = () => {
-    setShowIpSuggestion(false);
-    showToast('IP country suggestion dismissed', 'info');
-  };
 
   // Load skills from API
   useEffect(() => {
@@ -2089,42 +2027,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                      )}
                   </div>
                   {renderError(validationErrors.country, 'country')}
-                  
-                  {/* IP Country Suggestion */}
-                  {showIpSuggestion && ipCountrySuggestion && !editedProfile.personalInfo.country && (
-                    <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          <div>
-                            <p className="text-sm font-medium text-blue-800">
-                              We detected you're in {ipCountrySuggestion.countryName}
-                            </p>
-                            <p className="text-xs text-blue-600">
-                              Based on your IP address location
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={acceptIPCountrySuggestion}
-                            className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
-                          >
-                            Use this
-                          </button>
-                          <button
-                            onClick={dismissIPCountrySuggestion}
-                            className="px-3 py-1 text-xs font-medium text-blue-600 bg-white border border-blue-200 rounded-md hover:bg-blue-50 transition-colors"
-                          >
-                            Dismiss
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">📧 Email</h3>

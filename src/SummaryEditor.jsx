@@ -4,6 +4,8 @@ import openaiClient from './lib/ai/openaiClient';
 import { OpenAI } from 'openai';
 import { getLanguageCodeFromAI } from './lib/utils/textProcessing';
 import { getTimezones, getSkillsGrouped } from './lib/api/profiles';
+import Cookies from 'js-cookie';
+import axios from 'axios';
 
 // Add CSS styles for error highlighting
 const styles = `
@@ -18,6 +20,21 @@ const styles = `
     border-radius: 0.375rem;
     padding: 0.5rem;
   }
+
+  .country-mismatch-notification {
+    animation: slideIn 0.5s ease-out;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateY(-10px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
 `;
 
 // Add styles to document
@@ -27,6 +44,63 @@ if (!document.getElementById('summary-editor-styles')) {
   styleSheet.textContent = styles;
   document.head.appendChild(styleSheet);
 }
+
+// API function to get user's IP history
+const getUserIPHistory = async (userId) => {
+  try {
+    const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL;
+    const token = localStorage.getItem('token');
+    
+    const response = await axios.get(`${AUTH_API_URL}/users/${userId}/ip-history`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching IP history:', error);
+    return null;
+  }
+};
+
+// Function to find the first login location
+const getFirstLoginLocation = (ipHistory) => {
+  if (!ipHistory || !ipHistory.data || !Array.isArray(ipHistory.data)) {
+    return null;
+  }
+  
+  // Find the first login action in the history
+  const firstLogin = ipHistory.data.find(entry => entry.action === 'login');
+  
+  if (firstLogin && firstLogin.locationInfo && firstLogin.locationInfo.location) {
+    return {
+      countryCode: firstLogin.locationInfo.location.countryCode,
+      countryName: firstLogin.locationInfo.location.countryName,
+      city: firstLogin.locationInfo.city,
+      region: firstLogin.locationInfo.region
+    };
+  }
+  
+  return null;
+};
+
+// Function to get user ID from different sources
+const getUserId = (profileData) => {
+  // Try to get from cookies
+  const cookieUserId = Cookies.get('userId');
+  if (cookieUserId) {
+    return cookieUserId;
+  }
+  
+  // Try standalone mode
+  if (import.meta.env.VITE_RUN_MODE === 'standalone') {
+    return import.meta.env.VITE_STANDALONE_USER_ID;
+  }
+  
+  return null;
+};
 
 // Move ExperienceForm outside the main component
 const ExperienceForm = ({ experience, onSubmit, isNew = false }) => {
@@ -339,6 +413,9 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     availability: false,
     experience: false
   });
+  
+  // New state for country mismatch detection
+  const [firstLoginLocation, setFirstLoginLocation] = useState(null);
 
   const proficiencyLevels = [
     { value: 'A1', label: 'A1 - Beginner', description: 'Can understand and use basic phrases, introduce themselves' },
@@ -376,6 +453,36 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       setTempProfileDescription(profileData.professionalSummary?.profileDescription || '');
       
       console.log('🔍 EditedProfile initialized');
+    }
+  }, [profileData]);
+
+  // New useEffect to get first login location
+  useEffect(() => {
+    const getFirstLoginLocationInfo = async () => {
+      if (!profileData) {
+        return;
+      }
+
+      try {
+        const userId = getUserId(profileData);
+        if (!userId) {
+          console.log('No user ID found, skipping first login location check');
+          return;
+        }
+
+        const ipHistory = await getUserIPHistory(userId);
+        const firstLogin = getFirstLoginLocation(ipHistory);
+        
+        if (firstLogin) {
+          setFirstLoginLocation(firstLogin);
+        }
+      } catch (error) {
+        console.error('Error getting first login location:', error);
+      }
+    };
+
+    if (profileData) {
+      getFirstLoginLocationInfo();
     }
   }, [profileData]);
 
@@ -640,6 +747,75 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     }
     
     return { matches: true, message: '' };
+  };
+
+  // Function to check for country mismatch dynamically
+  const checkCountryMismatch = (currentCountry) => {
+    if (!firstLoginLocation || !currentCountry) {
+      return null;
+    }
+
+    const currentCountryCode = typeof currentCountry === 'object' 
+      ? currentCountry.countryCode 
+      : currentCountry;
+    
+    const firstLoginCountryCode = firstLoginLocation.countryCode;
+    
+    if (currentCountryCode !== firstLoginCountryCode) {
+      const currentCountryName = typeof currentCountry === 'object' 
+        ? currentCountry.countryName 
+        : countries.find(c => c.countryCode === currentCountryCode)?.countryName || currentCountryCode;
+      
+      return {
+        profileCountry: {
+          code: currentCountryCode,
+          name: currentCountryName
+        },
+        firstLoginCountry: {
+          code: firstLoginCountryCode,
+          name: firstLoginLocation.countryName,
+          city: firstLoginLocation.city,
+          region: firstLoginLocation.region
+        }
+      };
+    }
+    
+    return null;
+  };
+
+  // Component to render country mismatch warning under the country field
+  const CountryMismatchWarning = ({ currentCountry }) => {
+    const mismatch = checkCountryMismatch(currentCountry);
+    
+    if (!mismatch) return null;
+
+    return (
+      <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+        <div className="flex items-start gap-2">
+          <svg className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <div className="flex-1">
+            <h4 className="text-sm font-semibold text-amber-800 mb-1">Location Notice</h4>
+            <div className="text-sm text-amber-700 space-y-1">
+              <p>
+                Your profile shows <strong>{mismatch.profileCountry.name}</strong>, but your first login was from <strong>{mismatch.firstLoginCountry.name}</strong>
+                {mismatch.firstLoginCountry.city && (
+                  <span className="text-amber-600">
+                    {' '}({mismatch.firstLoginCountry.city}
+                    {mismatch.firstLoginCountry.region && `, ${mismatch.firstLoginCountry.region}`})
+                  </span>
+                )}
+              </p>
+              <p className="text-xs text-amber-600 mt-2">
+                💡 If this seems incorrect, you can update your country selection above.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const validateProfile = () => {
@@ -2027,6 +2203,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                      )}
                   </div>
                   {renderError(validationErrors.country, 'country')}
+                  <CountryMismatchWarning currentCountry={editedProfile.personalInfo?.country} />
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">📧 Email</h3>
@@ -2220,6 +2397,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                       : editedProfile.personalInfo.country || 'Not specified'}
                   </p>
                   {renderError(validationErrors.country, 'country')}
+                  <CountryMismatchWarning currentCountry={editedProfile.personalInfo?.country} />
                 </div>
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">📧 Email</h3>

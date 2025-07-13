@@ -343,8 +343,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     experience: false
   });
   // IP-based country detection state
-  const [ipDetectedCountry, setIpDetectedCountry] = useState(null); // Store IP detected country for comparison
-  const [showMismatchWarning, setShowMismatchWarning] = useState(false);
+  const [ipCountrySuggestion, setIpCountrySuggestion] = useState(null);
   const [showIpSuggestion, setShowIpSuggestion] = useState(false);
 
   const proficiencyLevels = [
@@ -448,12 +447,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     loadCountries();
   }, []);
 
-  // IP-based country detection - one-time check on load
+  // IP-based country detection
   useEffect(() => {
-    const detectIPCountryAndCompare = async () => {
+    const detectIPCountry = async () => {
       try {
-        // Only run once when component loads and we have countries data
-        if (countries.length === 0 || ipDetectedCountry !== null) {
+        // Only suggest if user hasn't set a country yet
+        if (editedProfile.personalInfo?.country) {
+          console.log('Country already set, skipping IP detection');
           return;
         }
 
@@ -468,17 +468,9 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           );
           
           if (matchingCountry) {
-            setIpDetectedCountry(matchingCountry);
-            console.log('IP detected country stored:', matchingCountry);
-            
-            // Compare with user's current country
-            const currentCountry = editedProfile.personalInfo?.country;
-            if (currentCountry && currentCountry.countryCode && 
-                currentCountry.countryCode.toLowerCase() !== ipCountryCode.toLowerCase()) {
-              
-              console.log('Country mismatch detected on load');
-              setShowMismatchWarning(true);
-            }
+            setIpCountrySuggestion(matchingCountry);
+            setShowIpSuggestion(true);
+            console.log('IP country suggestion ready:', matchingCountry);
           } else {
             console.log('IP country code not found in available countries list:', ipCountryCode);
           }
@@ -490,8 +482,26 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       }
     };
 
-    detectIPCountryAndCompare();
+    // Only run IP detection if we have countries loaded and no country is set
+    if (countries.length > 0 && !editedProfile.personalInfo?.country) {
+      detectIPCountry();
+    }
   }, [countries, editedProfile.personalInfo?.country, getUserLocation]);
+
+  // Function to accept IP country suggestion
+  const acceptIPCountrySuggestion = () => {
+    if (ipCountrySuggestion) {
+      handleCountrySelect(ipCountrySuggestion);
+      setShowIpSuggestion(false);
+      showToast(`Country set to ${ipCountrySuggestion.countryName} based on your IP location`, 'success');
+    }
+  };
+
+  // Function to dismiss IP country suggestion
+  const dismissIPCountrySuggestion = () => {
+    setShowIpSuggestion(false);
+    showToast('IP country suggestion dismissed', 'info');
+  };
 
   // Load skills from API
   useEffect(() => {
@@ -555,14 +565,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     setCountrySearch('');
     setIsSearching(false);
     handleProfileChange('country', country);
-    
-    // Check if selected country matches IP-detected country
-    if (ipDetectedCountry && country.countryCode && 
-        country.countryCode.toLowerCase() !== ipDetectedCountry.countryCode.toLowerCase()) {
-      setShowMismatchWarning(true);
-    } else {
-      setShowMismatchWarning(false);
-    }
     
     // Auto-suggest timezone based on country
     suggestTimezoneForCountry(country);
@@ -2088,20 +2090,37 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   </div>
                   {renderError(validationErrors.country, 'country')}
                   
-                  {/* Country Mismatch Warning */}
-                  {showMismatchWarning && ipDetectedCountry && (
-                    <div className="mt-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
-                      <div className="flex items-start gap-2">
-                        <svg className="w-5 h-5 text-amber-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
-                        </svg>
-                        <div>
-                          <p className="text-sm font-medium text-amber-800">
-                            Country Mismatch Detected
-                          </p>
-                          <p className="text-xs text-amber-700 mt-1">
-                            Your selected country differs from what we detected based on your IP address ({ipDetectedCountry.countryName}). This may be due to VPN usage or if you've moved to a different country.
-                          </p>
+                  {/* IP Country Suggestion */}
+                  {showIpSuggestion && ipCountrySuggestion && !editedProfile.personalInfo.country && (
+                    <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <div>
+                            <p className="text-sm font-medium text-blue-800">
+                              We detected you're in {ipCountrySuggestion.countryName}
+                            </p>
+                            <p className="text-xs text-blue-600">
+                              Based on your IP address location
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={acceptIPCountrySuggestion}
+                            className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+                          >
+                            Use this
+                          </button>
+                          <button
+                            onClick={dismissIPCountrySuggestion}
+                            className="px-3 py-1 text-xs font-medium text-blue-600 bg-white border border-blue-200 rounded-md hover:bg-blue-50 transition-colors"
+                          >
+                            Dismiss
+                          </button>
                         </div>
                       </div>
                     </div>

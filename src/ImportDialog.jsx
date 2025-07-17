@@ -3,6 +3,7 @@ import { Dialog } from '@headlessui/react';
 import OpenAI from 'openai';
 import { CVParser } from './lib/parsers/cvParser';
 import { useProfile } from './hooks/useProfile';
+import { getLanguageByCode } from './lib/api/languages';
 
 import { chunkText, safeJSONParse, retryOperation } from './lib/utils/textProcessing';
 
@@ -268,7 +269,8 @@ function ImportDialog({ isOpen, onClose, onImport }) {
             7. When in doubt between two levels, consider the overall context of language use
             8. Default to B1 only if there's significant uncertainty and no contextual clues
             9. If a language is mentioned but there are absolutely no clues about proficiency level, default to A1
-            10. For each language, determine the ISO 639-1 two-letter language code (e.g., "en" for English, "fr" for French, "zh" for Chinese)
+            10. For each language, determine the ISO 639-1 two-letter language code (e.g., "en" for English, "fr" for French, "zh" for Chinese, "de" for German, "es" for Spanish, "it" for Italian, "pt" for Portuguese, "nl" for Dutch, "ru" for Russian, "ja" for Japanese, "ko" for Korean, "ar" for Arabic, "hi" for Hindi, "zh" for Chinese)
+            11. IMPORTANT: Only return languages where you are confident about the correct ISO 639-1 code. If unsure about a language code, default to common languages or skip if completely uncertain.
 
             Return in this exact JSON format:
             {
@@ -309,8 +311,29 @@ function ImportDialog({ isOpen, onClose, onImport }) {
         throw new Error('Languages section is required to generate your profile. Please ensure your CV includes the languages you speak.');
       }
       
-      // No need to get ISO codes separately, they're already included in the response
-      addAnalysisStep("Skills categorized");
+      // Match extracted languages with database languages
+      addAnalysisStep("Matching languages with database...");
+      const matchedLanguages = [];
+      
+      for (const extractedLang of skills.languages) {
+        try {
+          const dbLanguage = await getLanguageByCode(extractedLang.iso639_1);
+          matchedLanguages.push({
+            language: dbLanguage,
+            proficiency: extractedLang.proficiency
+          });
+          console.log(`Matched language: ${extractedLang.language} (${extractedLang.iso639_1}) -> ${dbLanguage.name}`);
+        } catch (error) {
+          console.warn(`Could not match language code ${extractedLang.iso639_1} for ${extractedLang.language}:`, error);
+          // Skip languages that cannot be matched with the database
+        }
+      }
+      
+      if (matchedLanguages.length === 0) {
+        throw new Error('No languages could be matched with our database. Please ensure your CV includes common languages.');
+      }
+      
+      addAnalysisStep("Skills categorized and languages matched");
       setProgress(60);
 
       // Extract achievements and projects
@@ -407,7 +430,7 @@ function ImportDialog({ isOpen, onClose, onImport }) {
           country: basicInfo.country || '',
           email: basicInfo.email || '',
           phone: basicInfo.phone || '',
-          languages: skills.languages || defaultArrays.languages
+          languages: matchedLanguages || defaultArrays.languages
         },
         professionalSummary: {
           yearsOfExperience: Number(basicInfo.yearsOfExperience) || 0,

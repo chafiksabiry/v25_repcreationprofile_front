@@ -185,7 +185,6 @@ function ImportDialog({ isOpen, onClose, onImport }) {
                 "responsibilities": ["string"],
                 "achievements": ["string"]
               }],
-              "industries": ["string"],
               "keyAreas": ["string"],
               "notableCompanies": ["string"]
             }
@@ -409,7 +408,6 @@ function ImportDialog({ isOpen, onClose, onImport }) {
         professional: [],
         soft: [],
         languages: [],
-        industries: [],
         keyAreas: [],
         notableCompanies: [],
         roles: [],
@@ -435,7 +433,8 @@ function ImportDialog({ isOpen, onClose, onImport }) {
         professionalSummary: {
           yearsOfExperience: Number(basicInfo.yearsOfExperience) || 0,
           currentRole: basicInfo.currentRole || '',
-          industries: experience.industries || defaultArrays.industries,
+          industries: [],
+          activities: [],
           keyExpertise: experience.keyAreas || defaultArrays.keyAreas,
           notableCompanies: experience.notableCompanies || defaultArrays.notableCompanies
         },

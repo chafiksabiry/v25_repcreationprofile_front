@@ -3,7 +3,7 @@ import { useProfile } from './hooks/useProfile';
 import openaiClient from './lib/ai/openaiClient';
 import { OpenAI } from 'openai';
 import { getLanguageCodeFromAI } from './lib/utils/textProcessing';
-import { getTimezones, getSkillsGrouped } from './lib/api/profiles';
+import { getTimezones, getSkillsGrouped, getIndustries, getActivities } from './lib/api/profiles';
 import { getAllLanguages, searchLanguages } from './lib/api/languages';
 import Cookies from 'js-cookie';
 import axios from 'axios';
@@ -408,6 +408,10 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   const [availableLanguages, setAvailableLanguages] = useState([]);
   const [languageSearch, setLanguageSearch] = useState('');
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+  const [availableIndustries, setAvailableIndustries] = useState([]);
+  const [availableActivities, setAvailableActivities] = useState([]);
+  const [showIndustryDropdown, setShowIndustryDropdown] = useState(false);
+  const [showActivityDropdown, setShowActivityDropdown] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [modifiedSections, setModifiedSections] = useState({
@@ -444,6 +448,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         professionalSummary: {
           ...profileData.professionalSummary,
           industries: profileData.professionalSummary?.industries || [],
+          activities: profileData.professionalSummary?.activities || [],
           notableCompanies: profileData.professionalSummary?.notableCompanies || []
         },
         personalInfo: {
@@ -589,6 +594,36 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     loadLanguages();
   }, []);
 
+  // Load industries from API
+  useEffect(() => {
+    const loadIndustries = async () => {
+      try {
+        const industries = await getIndustries();
+        setAvailableIndustries(industries);
+        console.log('Loaded industries:', industries.length);
+      } catch (error) {
+        console.error('Error loading industries:', error);
+      }
+    };
+
+    loadIndustries();
+  }, []);
+
+  // Load activities from API
+  useEffect(() => {
+    const loadActivities = async () => {
+      try {
+        const activities = await getActivities();
+        setAvailableActivities(activities);
+        console.log('Loaded activities:', activities.length);
+      } catch (error) {
+        console.error('Error loading activities:', error);
+      }
+    };
+
+    loadActivities();
+  }, []);
+
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -612,6 +647,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       if (!event.target.closest('.language-selector')) {
         setShowLanguageDropdown(false);
         setLanguageSearch('');
+      }
+      if (!event.target.closest('.industry-selector')) {
+        setShowIndustryDropdown(false);
+      }
+      if (!event.target.closest('.activity-selector')) {
+        setShowActivityDropdown(false);
       }
     };
 
@@ -974,12 +1015,19 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       }));
   };
   
-  const addIndustry = async () => {
-    if (tempIndustry.trim()) {
+  const addIndustry = async (selectedIndustry) => {
+    if (selectedIndustry) {
       try {
+        // Check if industry is already selected
+        const isAlreadySelected = editedProfile.professionalSummary.industries.some(industry => 
+          (typeof industry === 'object' ? industry._id : industry) === selectedIndustry._id
+        );
+        
+        if (isAlreadySelected) return;
+        
         const updatedIndustries = [
           ...(editedProfile.professionalSummary.industries || []),
-          tempIndustry
+          selectedIndustry
         ];
         console.log("updated industries :", updatedIndustries);
         
@@ -998,9 +1046,9 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           }
         }));
 
-        setTempIndustry('');
         setHasUnsavedChanges(true);
         setModifiedSections(prev => ({ ...prev, professionalSummary: true }));
+        setShowIndustryDropdown(false);
       } catch (error) {
         console.error('Error adding industry:', error);
       }
@@ -1009,7 +1057,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
   const removeIndustry = async (index) => {
     try {
-      const updatedIndustries = (editedProfile.professionalSummary?.[type] || []).filter((_, i) => i !== index);
+      const updatedIndustries = (editedProfile.professionalSummary?.industries || []).filter((_, i) => i !== index);
 
       // Set validation error if removing the last industry
       if (updatedIndustries.length === 0) {
@@ -1038,6 +1086,60 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       setModifiedSections(prev => ({ ...prev, professionalSummary: true }));
     } catch (error) {
       console.error('Error removing industry:', error);
+    }
+  };
+
+  const addActivity = async (selectedActivity) => {
+    if (selectedActivity) {
+      try {
+        // Check if activity is already selected
+        const isAlreadySelected = (editedProfile.professionalSummary.activities || []).some(activity => 
+          (typeof activity === 'object' ? activity._id : activity) === selectedActivity._id
+        );
+        
+        if (isAlreadySelected) return;
+        
+        const updatedActivities = [
+          ...(editedProfile.professionalSummary.activities || []),
+          selectedActivity
+        ];
+        console.log("updated activities :", updatedActivities);
+
+        // Local update only
+        setEditedProfile(prev => ({
+          ...prev,
+          professionalSummary: {
+            ...prev.professionalSummary,
+            activities: updatedActivities
+          }
+        }));
+
+        setHasUnsavedChanges(true);
+        setModifiedSections(prev => ({ ...prev, professionalSummary: true }));
+        setShowActivityDropdown(false);
+      } catch (error) {
+        console.error('Error adding activity:', error);
+      }
+    }
+  };
+
+  const removeActivity = async (index) => {
+    try {
+      const updatedActivities = (editedProfile.professionalSummary?.activities || []).filter((_, i) => i !== index);
+
+      // Local update only
+      setEditedProfile(prev => ({
+        ...prev,
+        professionalSummary: {
+          ...prev.professionalSummary,
+          activities: updatedActivities
+        }
+      }));
+      
+      setHasUnsavedChanges(true);
+      setModifiedSections(prev => ({ ...prev, professionalSummary: true }));
+    } catch (error) {
+      console.error('Error removing activity:', error);
     }
   };
 
@@ -1432,21 +1534,33 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
     const handleRemove = async (index) => {
       try {
-        if (type === 'industries' || type === 'notableCompanies') {
+        if (type === 'industries' || type === 'notableCompanies' || type === 'activities') {
           const updatedData = (editedProfile.professionalSummary?.[type] || []).filter((_, i) => i !== index);
           
-          // Set validation error if removing the last item
-          if (updatedData.length === 0) {
+          // Set validation error if removing the last item (only for required fields)
+          if (updatedData.length === 0 && type === 'industries') {
             setValidationErrors(prev => ({
               ...prev,
-              [type === 'industries' ? 'industries' : 'companies']: `At least one ${type === 'industries' ? 'industry' : 'notable company'} is required`
+              industries: 'At least one industry is required'
+            }));
+          } else if (updatedData.length === 0 && type === 'notableCompanies') {
+            setValidationErrors(prev => ({
+              ...prev,
+              companies: 'At least one notable company is required'
             }));
           } else {
             // Clear validation error if there are still items
-            setValidationErrors(prev => ({
-              ...prev,
-              [type === 'industries' ? 'industries' : 'companies']: ''
-            }));
+            if (type === 'industries') {
+              setValidationErrors(prev => ({
+                ...prev,
+                industries: ''
+              }));
+            } else if (type === 'notableCompanies') {
+              setValidationErrors(prev => ({
+                ...prev,
+                companies: ''
+              }));
+            }
           }
           
           // Local update only
@@ -1551,6 +1665,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           {title === 'Soft Skills' && '🤝'}
           {title === 'Notable Companies' && '🌟'}
           {title === 'Industries' && '🏭'}
+          {title === 'Activities' && '🎯'}
           <span className="ml-2">{title}</span>
         </h3>
         <div className="space-y-4">
@@ -1715,6 +1830,144 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                         ))
                       ) : (
                         <div className="px-4 py-2 text-sm text-gray-500">No skills available</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : type === 'industries' ? (
+                <div className="relative industry-selector flex-1">
+                  <button
+                    onClick={() => setShowIndustryDropdown(!showIndustryDropdown)}
+                    className="w-full p-2 border rounded-md bg-white/50 text-left flex items-center justify-between"
+                  >
+                    <span className="text-gray-500">Select industries...</span>
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {showIndustryDropdown && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto z-20">
+                      {availableIndustries.length > 0 ? (
+                        availableIndustries.map((industry) => {
+                          const isSelected = safeSkills.some(item => 
+                            (typeof item === 'object' ? item._id : item) === industry._id
+                          );
+                          
+                          return (
+                            <button
+                              key={industry._id}
+                              onClick={() => addIndustry(industry)}
+                              disabled={isSelected}
+                              className={`w-full px-6 py-3 text-left hover:bg-blue-50 flex items-center justify-between transition-colors duration-200 ${
+                                isSelected 
+                                  ? 'bg-green-50 text-green-700 cursor-not-allowed' 
+                                  : 'text-gray-700 hover:text-blue-700'
+                              }`}
+                            >
+                              <div className="flex flex-col flex-1">
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-green-500' : 'bg-blue-400'}`}></div>
+                                  <span className="font-semibold text-sm">{industry.name}</span>
+                                </div>
+                                <span className="text-xs text-gray-500 ml-3.5 mt-1 leading-relaxed">
+                                  {industry.description}
+                                </span>
+                              </div>
+                              {isSelected && (
+                                <div className="flex items-center gap-2 ml-4">
+                                  <span className="text-xs font-medium text-green-600">Selected</span>
+                                  <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })
+                      ) : (
+                        <div className="px-4 py-2 text-sm text-gray-500">No industries available</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : type === 'activities' ? (
+                <div className="relative activity-selector flex-1">
+                  <button
+                    onClick={() => setShowActivityDropdown(!showActivityDropdown)}
+                    className="w-full p-2 border rounded-md bg-white/50 text-left flex items-center justify-between"
+                  >
+                    <span className="text-gray-500">Select activities...</span>
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {showActivityDropdown && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto z-20">
+                      {availableActivities.length > 0 ? (
+                        // Group activities by category
+                        Object.entries(
+                          availableActivities.reduce((groups, activity) => {
+                            const category = activity.category || 'Other';
+                            if (!groups[category]) groups[category] = [];
+                            groups[category].push(activity);
+                            return groups;
+                          }, {})
+                        ).map(([category, categoryActivities]) => (
+                          <div key={category} className="mb-2 last:mb-0">
+                            {/* Category Header */}
+                            <div className="sticky top-0 bg-gradient-to-r from-green-600 to-teal-600 text-white px-4 py-3 font-bold text-sm uppercase tracking-wide shadow-sm">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-white rounded-full"></div>
+                                <span>{category}</span>
+                                <div className="ml-auto text-xs bg-white/20 px-2 py-1 rounded-full">
+                                  {categoryActivities.length} activities
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Activities in this category */}
+                            <div className="bg-gray-50/30">
+                              {categoryActivities.map((activity) => {
+                                const isSelected = safeSkills.some(item => 
+                                  (typeof item === 'object' ? item._id : item) === activity._id
+                                );
+                                
+                                return (
+                                  <button
+                                    key={activity._id}
+                                    onClick={() => addActivity(activity)}
+                                    disabled={isSelected}
+                                    className={`w-full px-6 py-3 text-left hover:bg-blue-50 flex items-center justify-between transition-colors duration-200 ${
+                                      isSelected 
+                                        ? 'bg-green-50 text-green-700 cursor-not-allowed' 
+                                        : 'text-gray-700 hover:text-blue-700'
+                                    }`}
+                                  >
+                                    <div className="flex flex-col flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-green-500' : 'bg-blue-400'}`}></div>
+                                        <span className="font-semibold text-sm">{activity.name}</span>
+                                      </div>
+                                      <span className="text-xs text-gray-500 ml-3.5 mt-1 leading-relaxed">
+                                        {activity.description}
+                                      </span>
+                                    </div>
+                                    {isSelected && (
+                                      <div className="flex items-center gap-2 ml-4">
+                                        <span className="text-xs font-medium text-green-600">Selected</span>
+                                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      </div>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-2 text-sm text-gray-500">No activities available</div>
                       )}
                     </div>
                   )}
@@ -2025,8 +2278,19 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       }
       
       if (modifiedSections.professionalSummary) {
+        // Extract only IDs for industries and activities before saving
+        const professionalSummaryToSave = {
+          ...editedProfile.professionalSummary,
+          industries: editedProfile.professionalSummary.industries?.map(industry => 
+            typeof industry === 'object' ? industry._id : industry
+          ) || [],
+          activities: editedProfile.professionalSummary.activities?.map(activity => 
+            typeof activity === 'object' ? activity._id : activity
+          ) || []
+        };
+        
         await updateProfileData(editedProfile._id, {
-          professionalSummary: editedProfile.professionalSummary
+          professionalSummary: professionalSummaryToSave
         });
       }
 
@@ -2087,6 +2351,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         professionalSummary: {
           ...profileData.professionalSummary,
           industries: profileData.professionalSummary?.industries || [],
+          activities: profileData.professionalSummary?.activities || [],
           notableCompanies: profileData.professionalSummary?.notableCompanies || []
         },
         personalInfo: {
@@ -2530,6 +2795,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
             {renderSkillSection('Professional Skills', editedProfile.skills?.professional || [], 'professional')}
             {renderSkillSection('Soft Skills', editedProfile.skills?.soft || [], 'soft')}
             {renderSkillSection('Industries', editedProfile.professionalSummary?.industries || [], 'industries')}
+            {renderSkillSection('Activities', editedProfile.professionalSummary?.activities || [], 'activities')}
             {renderSkillSection('Notable Companies', editedProfile.professionalSummary?.notableCompanies || [], 'notableCompanies')}
           </div>
 

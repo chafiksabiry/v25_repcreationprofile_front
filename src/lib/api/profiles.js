@@ -131,3 +131,25 @@ export const getSkillsGrouped = async (skillType) => {
     throw error.response?.data || error;
   }
 };
+
+// Get all industries
+export const getIndustries = async () => {
+  try {
+    const { data } = await api.get('/industries');
+    return data.data; // Return the data array from the response
+  } catch (error) {
+    console.error('Error fetching industries:', error);
+    throw error.response?.data || error;
+  }
+};
+
+// Get all activities
+export const getActivities = async () => {
+  try {
+    const { data } = await api.get('/activities');
+    return data.data; // Return the data array from the response
+  } catch (error) {
+    console.error('Error fetching activities:', error);
+    throw error.response?.data || error;
+  }
+};

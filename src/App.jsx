@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import ImportDialog from './ImportDialog';
 import SummaryEditor from './SummaryEditor';
+import TopBar from './components/TopBar';
 import api from './lib/api/client';
 import Cookies from 'js-cookie';
 import { useProfile } from './hooks/useProfile';
@@ -139,6 +140,8 @@ function ProfileRouter() {
     navigate('/profile-editor');
   };
 
+
+
   // Show loading during initialization
   if (isInitializing) {
     return <Loading />;
@@ -150,8 +153,10 @@ function ProfileRouter() {
   // Import page
   if (currentPath === '/profile-import') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <TopBar />
+        <div className="pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
           {/* Header section */}
           <div className="text-center mb-12">
             <div className="flex items-center justify-center mb-6">
@@ -206,6 +211,7 @@ function ProfileRouter() {
             onClose={() => setIsImportOpen(false)}
             onImport={handleProfileData}
           />
+          </div>
         </div>
       </div>
     );
@@ -219,8 +225,10 @@ function ProfileRouter() {
     }
     
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <TopBar />
+        <div className="pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
           {/* Header section */}
           <div className="text-center mb-12">
             <div className="flex items-center justify-center mb-6">
@@ -251,6 +259,7 @@ function ProfileRouter() {
               <Loading />
             </div>
           )}
+          </div>
         </div>
       </div>
     );

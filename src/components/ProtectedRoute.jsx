@@ -27,11 +27,16 @@ const ProtectedRoute = ({ children, fallback }) => {
   useEffect(() => {
     // Nettoyer l'historique du navigateur pour les pages protégées
     if (isAuthenticated) {
+      // Construire l'URL complète avec le basename pour préserver le contexte React Router
+      const isStandalone = import.meta.env.VITE_RUN_MODE === 'standalone';
+      const basename = isStandalone ? '' : '/repcreationprofile';
+      const fullPath = basename + location.pathname + location.search;
+      
       // Remplacer l'entrée actuelle de l'historique pour empêcher le retour
       window.history.replaceState(
         { protected: true, timestamp: Date.now() },
         '',
-        location.pathname + location.search
+        fullPath
       );
     }
   }, [isAuthenticated, location.pathname, location.search]);
@@ -95,14 +100,16 @@ const ProtectedRoute = ({ children, fallback }) => {
     return <LoadingScreen />;
   }
 
-  // Si non authentifié, rediriger vers la page de connexion
+  // Si non authentifié, rediriger immédiatement vers l'app d'authentification
   if (!isAuthenticated) {
     const redirectUrl = getMainAppUrl();
-    console.log('Utilisateur non authentifié, redirection vers:', redirectUrl);
+    console.log('Utilisateur non authentifié, redirection automatique vers:', redirectUrl);
     
-    // Pour React Router, on utilise window.location car on sort du contexte de l'app
+    // Redirection immédiate vers l'app principale
     window.location.replace(redirectUrl);
-    return null;
+    
+    // Retourner un écran de chargement pendant la redirection
+    return <LoadingScreen />;
   }
 
   // Si authentifié, afficher le contenu protégé

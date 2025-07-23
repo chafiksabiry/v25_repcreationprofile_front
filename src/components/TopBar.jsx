@@ -1,15 +1,11 @@
 import React from 'react';
-import Cookies from 'js-cookie';
+import { useAuth } from '../contexts/AuthContext';
 
 const TopBar = () => {
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.clear();
-    const cookies = Cookies.get();
-    Object.keys(cookies).forEach(cookieName => {
-      Cookies.remove(cookieName);
-    });
-    window.location.replace('/auth');
+    logout(); // Utilise la fonction logout sécurisée du contexte
   };
 
   return (

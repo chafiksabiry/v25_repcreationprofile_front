@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { register, login } from '../api/auth';
 
-export const useAuth = () => {
+// DEPRECATED: Ce hook est obsolète. Utilisez useAuth depuis contexts/AuthContext.jsx à la place.
+
+export const useAuthOld = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

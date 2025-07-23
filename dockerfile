@@ -17,7 +17,7 @@ ENV VITE_RUN_MODE=in-app
 ENV VITE_STANDALONE_USER_ID=681e2d9b4d60b1ff380960f0
 #user id for standalone mode 
 ENV VITE_STANDALONE_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODFlMmQ5YjRkNjBiMWZmMzgwOTYwZjAiLCJpYXQiOjE3NDY4MDgzODB9.aIKpQumOPHJekxzSgDkB1r0ax5BAUE_QErs_chL5-mg
-ENV VITE_FRONT_URL=https://rep-profile-creation.harx.ai/
+ENV VITE_FRONT_URL=https://preprod-rep-profile-creation.harx.ai/
 # Install dependencies
 RUN npm install
 

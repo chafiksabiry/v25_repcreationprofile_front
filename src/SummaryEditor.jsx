@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useProfile } from './hooks/useProfile';
-import { getLanguageCodeFromAI } from './lib/utils/textProcessing';
 import { getTimezones, getSkillsGrouped, getIndustries, getActivities, generateSummary } from './lib/api/profiles';
 import { getAllLanguages, searchLanguages } from './lib/api/languages';
 import Cookies from 'js-cookie';

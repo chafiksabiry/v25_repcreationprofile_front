@@ -9,7 +9,6 @@ COPY package*.json ./
 
 ENV VITE_API_URL=https://preprod-api-repcreationwizard.harx.ai/api
 ENV VITE_AUTH_API_URL=https://preprod-api-registration.harx.ai/api
-ENV VITE_OPENAI_API_KEY=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
 ENV VITE_REP_ORCHESTRATOR_URL=/reporchestrator
 ENV VITE_REP_ORCHESTRATOR_URL_STANDALONE=https://preprod-rep-orchestrator.harx.ai/
 ENV VITE_RUN_MODE=in-app

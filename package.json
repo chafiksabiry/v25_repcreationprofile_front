@@ -21,7 +21,6 @@
     "js-cookie": "^3.0.5",
     "js-cookies": "^1.0.4",
     "mammoth": "^1.6.0",
-    "openai": "^4.0.0",
     "pdfjs-dist": "^3.11.174",
     "qiankun": "^2.10.16",
     "query-string": "^8.1.0",

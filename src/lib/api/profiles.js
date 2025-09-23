@@ -164,3 +164,58 @@ export const extractBasicInfo = async (contentToProcess) => {
     throw error.response?.data || error;
   }
 };
+
+// Analyze work experience from CV
+export const analyzeExperience = async (contentToProcess) => {
+  try {
+    const { data } = await api.post('/cv/analyze-experience', { contentToProcess });
+    return data;
+  } catch (error) {
+    console.error('Error analyzing work experience from CV:', error);
+    throw error.response?.data || error;
+  }
+};
+
+// Analyze skills and languages from CV
+export const analyzeSkills = async (contentToProcess) => {
+  try {
+    const { data } = await api.post('/cv/analyze-skills', { contentToProcess });
+    return data;
+  } catch (error) {
+    console.error('Error analyzing skills from CV:', error);
+    throw error.response?.data || error;
+  }
+};
+
+// Extract achievements from CV
+export const analyzeAchievements = async (contentToProcess) => {
+  try {
+    const { data } = await api.post('/cv/analyze-achievements', { contentToProcess });
+    return data;
+  } catch (error) {
+    console.error('Error analyzing achievements from CV:', error);
+    throw error.response?.data || error;
+  }
+};
+
+// Analyze availability from CV
+export const analyzeAvailability = async (contentToProcess) => {
+  try {
+    const { data } = await api.post('/cv/analyze-availability', { contentToProcess });
+    return data;
+  } catch (error) {
+    console.error('Error analyzing availability from CV:', error);
+    throw error.response?.data || error;
+  }
+};
+
+// Generate CV summary
+export const generateSummary = async (profileData) => {
+  try {
+    const { data } = await api.post('/cv/generate-summary', { profileData });
+    return data.summary;
+  } catch (error) {
+    console.error('Error generating CV summary:', error);
+    throw error.response?.data || error;
+  }
+};

@@ -218,6 +218,16 @@ function ImportDialog({ isOpen, onClose, onImport }) {
 
       // Generate optimized summary
       const summary = await generateProfileSummary(combinedData);
+      console.log("Generated summary:", summary);
+      
+      // Ensure we have a valid summary
+      if (!summary) {
+        throw new Error('Failed to generate summary');
+      }
+
+      // Update combinedData with the generated summary
+      combinedData.professionalSummary.profileDescription = summary;
+      
       addAnalysisStep("Analysis complete!");
       setProgress(100);
 

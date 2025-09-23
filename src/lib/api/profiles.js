@@ -213,7 +213,8 @@ export const analyzeAvailability = async (contentToProcess) => {
 export const generateSummary = async (profileData) => {
   try {
     const { data } = await api.post('/cv/generate-summary', { profileData });
-    return data.summary;
+    // La réponse est directement la chaîne de caractères
+    return data;
   } catch (error) {
     console.error('Error generating CV summary:', error);
     throw error.response?.data || error;

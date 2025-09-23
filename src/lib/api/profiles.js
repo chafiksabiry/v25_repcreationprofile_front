@@ -153,3 +153,14 @@ export const getActivities = async () => {
     throw error.response?.data || error;
   }
 };
+
+// Extract basic information from CV
+export const extractBasicInfo = async (contentToProcess) => {
+  try {
+    const { data } = await api.post('/cv/extract-basic-info', { contentToProcess });
+    return data;
+  } catch (error) {
+    console.error('Error extracting basic info from CV:', error);
+    throw error.response?.data || error;
+  }
+};

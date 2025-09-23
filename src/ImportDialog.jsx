@@ -1,16 +1,18 @@
 import React, { useState, useRef } from 'react';
 import { Dialog } from '@headlessui/react';
-import OpenAI from 'openai';
 import { CVParser } from './lib/parsers/cvParser';
 import { useProfile } from './hooks/useProfile';
 import { getLanguageByCode } from './lib/api/languages';
+import { 
+  extractBasicInfo, 
+  analyzeExperience,
+  analyzeSkills,
+  analyzeAchievements,
+  analyzeAvailability,
+  generateSummary
+} from './lib/api/profiles';
 
 import { chunkText, safeJSONParse, retryOperation } from './lib/utils/textProcessing';
-
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true
-});
 
 function ImportDialog({ isOpen, onClose, onImport }) {
   const { createProfile } = useProfile();
@@ -79,30 +81,8 @@ function ImportDialog({ isOpen, onClose, onImport }) {
   };
 
 
-  const generateSummary = async (data) => {
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: `You are a professional CV writer. Create a compelling professional summary that follows the REPS framework:
-          - Role: Current position and career focus
-          - Experience: Years of experience and key industries
-          - Projects: Notable achievements and contributions
-          - Skills: Core technical and professional competencies
-          
-          Keep the summary concise, impactful, and achievement-oriented.`
-        },
-        {
-          role: "user",
-          content: `Create a professional REPS summary based on this profile data: ${JSON.stringify(data)}`
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 500
-    });
-
-    return response.choices[0].message.content;
+  const generateProfileSummary = async (data) => {
+    return await generateSummary(data);
   };
 
   const parseProfile = async (contentToProcess = text) => {
@@ -113,11 +93,7 @@ function ImportDialog({ isOpen, onClose, onImport }) {
     setAnalysisSteps([]);
 
     try {
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-      if (!apiKey) {
-        throw new Error('OpenAI API key is required');
-      }
-
+      console.log("contentToProcess :", contentToProcess);
       if (!contentToProcess.trim()) {
         throw new Error('Please provide some content to process');
       }
@@ -125,186 +101,17 @@ function ImportDialog({ isOpen, onClose, onImport }) {
       addAnalysisStep("Starting CV analysis...");
 
       // Initial analysis to extract basic information
-      const basicInfoResponse = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert CV analyzer. Extract the following basic information from the CV and return it in the exact JSON format shown below:
-            {
-              "name": "string",
-              "country": "string (MUST be the 2-letter ISO country code as used by timezoneDB API - e.g., 'FR' for France, 'GB' for United Kingdom, 'US' for United States, 'SS' for South Sudan, 'DE' for Germany, 'CA' for Canada, etc.)",
-              "email": "string",
-              "phone": "string",
-              "currentRole": "string",
-              "yearsOfExperience": "number (MUST be an integer between 0 and 50)"
-            }`
-          },
-          {
-            role: "user",
-            content: contentToProcess
-          }
-        ],
-        temperature: 0.3,
-        response_format: { type: "json_object" }
-      });
-
-      const basicInfo = JSON.parse(basicInfoResponse.choices[0].message.content);
+      const basicInfo = await extractBasicInfo(contentToProcess);
       addAnalysisStep("Basic information extracted");
       setProgress(20);
 
       // Analyze work experience
-      const experienceResponse = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "system",
-            content: `Analyze the work experience section of this CV and return it in the exact JSON format shown below. Follow these rules strictly:
-
-            Date Formatting Rules:
-            1. All dates must be in ISO format (YYYY-MM-DD)
-            2. For current/ongoing positions:
-               - endDate MUST be exactly the string "present" (lowercase)
-               - Do not use any other variations like "Present", "now", "current", etc.
-            3. For completed positions:
-               - endDate must be a valid date in YYYY-MM-DD format
-               - If only month and year are provided, use the last day of that month
-               - If only year is provided, use December 31st of that year
-            4. For startDate:
-               - Must always be a valid date in YYYY-MM-DD format
-               - If only month and year are provided, use the first day of that month
-               - If only year is provided, use January 1st of that year
-
-            Return in this exact format:
-            {
-              "roles": [{
-                "title": "string",
-                "company": "string",
-                "startDate": "YYYY-MM-DD",  // Must be a valid date
-                "endDate": "YYYY-MM-DD" | "present",  // Must be either a valid date or exactly "present"
-                "responsibilities": ["string"],
-                "achievements": ["string"]
-              }],
-              "keyAreas": ["string"],
-              "notableCompanies": ["string"]
-            }
-
-            Example of valid dates:
-            - startDate: "2024-01-01"  // January 2024
-            - endDate: "2024-03-31"    // March 2024
-            - endDate: "present"        // Current position`
-          },
-          {
-            role: "user",
-            content: contentToProcess
-          }
-        ],
-        temperature: 0.3,
-        response_format: { type: "json_object" }
-      });
-
-      const experience = JSON.parse(experienceResponse.choices[0].message.content);
+      const experience = await analyzeExperience(contentToProcess);
       addAnalysisStep("Work experience analyzed");
       setProgress(40);
 
       // Extract and categorize skills
-      const skillsResponse = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "system",
-            content: `Analyze the CV for skills and competencies, with special attention to language proficiency evaluation. You MUST extract ALL languages mentioned in the CV, even if they are mentioned briefly or without explicit proficiency levels. For languages, you must intelligently map any proficiency description to the CEFR scale (A1-C2) based on the following comprehensive guidelines:
-
-            CEFR Level Assessment Guidelines:
-
-            A1 (Beginner/Basic)
-            - Can understand and use basic phrases
-            - Can introduce themselves and others
-            - Expressions suggesting A1: basic, elementary, débutant, notions, beginner, basic words and phrases
-            - Context clues: "took introductory courses", "basic communication", "learning basics"
-
-            A2 (Elementary)
-            - Can communicate in simple, routine situations
-            - Can describe aspects of background, environment
-            - Expressions suggesting A2: pre-intermediate, basic working knowledge, connaissance basique, can read simple texts
-            - Context clues: "can handle simple work communications", "basic professional interactions"
-
-            B1 (Intermediate)
-            - Can deal with most situations while traveling
-            - Can describe experiences, events, dreams, hopes
-            - Expressions suggesting B1: intermediate, working knowledge, niveau moyen, bonne base, conversational
-            - Context clues: "can participate in meetings", "handle routine work tasks"
-
-            B2 (Upper Intermediate)
-            - Can interact with degree of fluency with native speakers
-            - Can produce clear, detailed text
-            - Expressions suggesting B2: upper intermediate, professional working, bonne maitrise, fluent, professional proficiency
-            - Context clues: "regular professional use", "conduct business meetings", "negotiate with clients"
-
-            C1 (Advanced)
-            - Can use language flexibly and effectively
-            - Can produce clear, well-structured, detailed texts
-            - Expressions suggesting C1: advanced, highly fluent, excellent, très bonne maitrise, native-like, full professional proficiency
-            - Context clues: "worked in language", "lived in country for years", "conducted complex negotiations"
-
-            C2 (Mastery)
-            - Can understand virtually everything heard or read
-            - Can express themselves spontaneously, precisely, and fluently
-            - Expressions suggesting C2: native, mother tongue, bilingual, langue maternelle, perfect mastery
-            - Context clues: "native speaker", "grew up speaking", "primary language of education"
-
-            Analysis Instructions:
-            1. CRITICAL: Extract ALL languages mentioned in the CV, regardless of how briefly they are mentioned
-            2. Look for languages in ALL sections of the CV including:
-               - Language sections
-               - Education history (e.g. courses taken in different languages)
-               - Work experience (e.g. working with international teams)
-               - Skills sections
-               - Personal projects or achievements
-            3. For each language found, look for both explicit statements and contextual clues about language use
-            4. Consider the professional context where the language is used
-            5. Look for indicators of duration and depth of language exposure
-            6. If the CV mentions work experience or education in a country, factor this into the assessment
-            7. When in doubt between two levels, consider the overall context of language use
-            8. Default to B1 only if there's significant uncertainty and no contextual clues
-            9. If a language is mentioned but there are absolutely no clues about proficiency level, default to A1
-            10. For each language, determine the ISO 639-1 two-letter language code (e.g., "en" for English, "fr" for French, "zh" for Chinese, "de" for German, "es" for Spanish, "it" for Italian, "pt" for Portuguese, "nl" for Dutch, "ru" for Russian, "ja" for Japanese, "ko" for Korean, "ar" for Arabic, "hi" for Hindi, "zh" for Chinese)
-            11. IMPORTANT: Only return languages where you are confident about the correct ISO 639-1 code. If unsure about a language code, default to common languages or skip if completely uncertain.
-
-            Return in this exact JSON format:
-            {
-              "technical": [{
-                "name": "string",
-                "confidence": number,
-                "context": "string"
-              }],
-              "professional": [{
-                "name": "string",
-                "confidence": number,
-                "context": "string"
-              }],
-              "soft": [{
-                "name": "string",
-                "confidence": number,
-                "context": "string"
-              }],
-              "languages": [{
-                "language": "string",
-                "proficiency": "string (MUST be one of: A1, A2, B1, B2, C1, C2)",
-                "iso639_1": "string (two-letter ISO 639-1 language code)"
-              }]
-            }`
-          },
-          {
-            role: "user",
-            content: contentToProcess
-          }
-        ],
-        temperature: 0.3,
-        response_format: { type: "json_object" }
-      });
-
-      const skills = JSON.parse(skillsResponse.choices[0].message.content);
+      const skills = await analyzeSkills(contentToProcess);
       console.log("languages extracted :", skills.languages);
       if (skills.languages.length === 0) {
         throw new Error('Languages section is required to generate your profile. Please ensure your CV includes the languages you speak.');
@@ -336,69 +143,12 @@ function ImportDialog({ isOpen, onClose, onImport }) {
       setProgress(60);
 
       // Extract achievements and projects
-      const achievementsResponse = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "system",
-            content: `Analyze the CV for notable achievements and projects and return them in the exact JSON format shown below:
-            {
-              "items": [{
-                "description": "string",
-                "impact": "string",
-                "context": "string",
-                "skills": ["string"]
-              }]
-            }`
-          },
-          {
-            role: "user",
-            content: contentToProcess
-          }
-        ],
-        temperature: 0.3,
-        response_format: { type: "json_object" }
-      });
-
-      const achievements = JSON.parse(achievementsResponse.choices[0].message.content);
+      const achievements = await analyzeAchievements(contentToProcess);
       addAnalysisStep("Achievements extracted");
       setProgress(80);
 
       // Extract availability information
-      const availabilityResponse = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "system",
-            content: `Analyze the CV for any mentions of working hours, availability, or schedule preferences. Look for:
-            1. Preferred working hours
-            2. Time zone or location-based working hours
-            3. Schedule flexibility (remote work, flexible hours, etc.)
-            4. Any specific working day preferences
-
-            Return in this exact JSON format:
-            {
-              "schedule": [{
-                "day": "string (one of: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday)",
-                "hours": {
-                  "start": "string (HH:MM format)",
-                  "end": "string (HH:MM format)"
-                }
-              }],
-              "timeZone": "string",
-              "flexibility": ["string"]
-            }`
-          },
-          {
-            role: "user",
-            content: contentToProcess
-          }
-        ],
-        temperature: 0.3,
-        response_format: { type: "json_object" }
-      });
-
-      const availability = JSON.parse(availabilityResponse.choices[0].message.content);
+      const availability = await analyzeAvailability(contentToProcess);
       addAnalysisStep("Availability preferences analyzed");
       setProgress(85);
 
@@ -467,7 +217,17 @@ function ImportDialog({ isOpen, onClose, onImport }) {
       setProgress(90);
 
       // Generate optimized summary
-      const summary = await generateSummary(combinedData);
+      const summary = await generateProfileSummary(combinedData);
+      console.log("Generated summary:", summary);
+      
+      // Ensure we have a valid summary
+      if (!summary) {
+        throw new Error('Failed to generate summary');
+      }
+
+      // Update combinedData with the generated summary
+      combinedData.professionalSummary.profileDescription = summary;
+      
       addAnalysisStep("Analysis complete!");
       setProgress(100);
 

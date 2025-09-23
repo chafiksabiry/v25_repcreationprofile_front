@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import ImportDialog from './ImportDialog';
 import SummaryEditor from './SummaryEditor';
+import TopBar from './components/TopBar';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import api from './lib/api/client';
 import Cookies from 'js-cookie';
 import { useProfile } from './hooks/useProfile';
@@ -23,6 +26,7 @@ function ProfileRouter() {
   const [generatedSummary, setGeneratedSummary] = useState('');
   const [isImportOpen, setIsImportOpen] = useState(false);
   const { getProfile, loading: profileLoading } = useProfile();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   let userId = null;
@@ -58,10 +62,16 @@ function ProfileRouter() {
         // Step 1: Generate and store token
         const tokenResponse = await api.post('/auth/generate-token', { userId });
         if (tokenResponse?.data?.token) {
+          // Step 2: Store token and userId directly
           localStorage.setItem('token', tokenResponse.data.token);
+          Cookies.set('userId', userId, { 
+            expires: 7, // 7 jours
+            secure: window.location.protocol === 'https:',
+            sameSite: 'lax'
+          });
           console.log("Token generated and stored successfully");
           
-          // Step 2: Now that we have a token, fetch the profile
+          // Step 3: Now that we have a token, fetch the profile
           const profileData = await getProfile(userId);
           console.log("Profile fetched:", profileData ? "Success" : "Not found");
           
@@ -106,7 +116,7 @@ function ProfileRouter() {
             //}
           } else {
             console.log("Navigation already happened, skipping route change");
-          }
+            }
         } else {
           console.error("Failed to obtain token");
         }
@@ -139,6 +149,8 @@ function ProfileRouter() {
     navigate('/profile-editor');
   };
 
+
+
   // Show loading during initialization
   if (isInitializing) {
     return <Loading />;
@@ -150,8 +162,10 @@ function ProfileRouter() {
   // Import page
   if (currentPath === '/profile-import') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <TopBar />
+        <div className="pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
           {/* Header section */}
           <div className="text-center mb-12">
             <div className="flex items-center justify-center mb-6">
@@ -206,6 +220,7 @@ function ProfileRouter() {
             onClose={() => setIsImportOpen(false)}
             onImport={handleProfileData}
           />
+          </div>
         </div>
       </div>
     );
@@ -219,8 +234,10 @@ function ProfileRouter() {
     }
     
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <TopBar />
+        <div className="pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
           {/* Header section */}
           <div className="text-center mb-12">
             <div className="flex items-center justify-center mb-6">
@@ -251,6 +268,7 @@ function ProfileRouter() {
               <Loading />
             </div>
           )}
+          </div>
         </div>
       </div>
     );
@@ -262,19 +280,29 @@ function ProfileRouter() {
 
 function App() {
   return (
-    <Router basename={import.meta.env.VITE_RUN_MODE === 'standalone' ? '/' : '/repcreationprofile'}>
-      <Routes>
-        {/* Old route preserved for compatibility */}
-        <Route path="/profile-wizard" element={<Navigate to="/profile-import" replace />} />
-        
-        {/* New specific routes */}
-        <Route path="/profile-import" element={<ProfileRouter />} />
-        <Route path="/profile-editor" element={<ProfileRouter />} />
-        
-        {/* Default route */}
-        <Route path="*" element={<Navigate to="/profile-import" replace />} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router basename={import.meta.env.VITE_RUN_MODE === 'standalone' ? '/' : '/repcreationprofile'}>
+        <Routes>
+          {/* Old route preserved for compatibility */}
+          <Route path="/profile-wizard" element={<Navigate to="/profile-import" replace />} />
+          
+          {/* Protected routes - require authentication */}
+          <Route path="/profile-import" element={
+            <ProtectedRoute>
+              <ProfileRouter />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile-editor" element={
+            <ProtectedRoute>
+              <ProfileRouter />
+            </ProtectedRoute>
+          } />
+          
+          {/* Default route */}
+          <Route path="*" element={<Navigate to="/profile-import" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

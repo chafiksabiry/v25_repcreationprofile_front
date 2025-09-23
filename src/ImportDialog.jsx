@@ -1,16 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { Dialog } from '@headlessui/react';
-import OpenAI from 'openai';
 import { CVParser } from './lib/parsers/cvParser';
 import { useProfile } from './hooks/useProfile';
 import { getLanguageByCode } from './lib/api/languages';
+import { extractBasicInfo } from './lib/api/profiles';
 
 import { chunkText, safeJSONParse, retryOperation } from './lib/utils/textProcessing';
-
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true
-});
 
 function ImportDialog({ isOpen, onClose, onImport }) {
   const { createProfile } = useProfile();
@@ -113,11 +108,7 @@ function ImportDialog({ isOpen, onClose, onImport }) {
     setAnalysisSteps([]);
 
     try {
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-      if (!apiKey) {
-        throw new Error('OpenAI API key is required');
-      }
-
+      console.log("contentToProcess :", contentToProcess);
       if (!contentToProcess.trim()) {
         throw new Error('Please provide some content to process');
       }
@@ -125,31 +116,7 @@ function ImportDialog({ isOpen, onClose, onImport }) {
       addAnalysisStep("Starting CV analysis...");
 
       // Initial analysis to extract basic information
-      const basicInfoResponse = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "system",
-            content: `You are an expert CV analyzer. Extract the following basic information from the CV and return it in the exact JSON format shown below:
-            {
-              "name": "string",
-              "country": "string (MUST be the 2-letter ISO country code as used by timezoneDB API - e.g., 'FR' for France, 'GB' for United Kingdom, 'US' for United States, 'SS' for South Sudan, 'DE' for Germany, 'CA' for Canada, etc.)",
-              "email": "string",
-              "phone": "string",
-              "currentRole": "string",
-              "yearsOfExperience": "number (MUST be an integer between 0 and 50)"
-            }`
-          },
-          {
-            role: "user",
-            content: contentToProcess
-          }
-        ],
-        temperature: 0.3,
-        response_format: { type: "json_object" }
-      });
-
-      const basicInfo = JSON.parse(basicInfoResponse.choices[0].message.content);
+      const basicInfo = await extractBasicInfo(contentToProcess);
       addAnalysisStep("Basic information extracted");
       setProgress(20);
 

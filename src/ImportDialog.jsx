@@ -234,6 +234,7 @@ function ImportDialog({ isOpen, onClose, onImport }) {
       // Create profile in database and get MongoDB document
       console.log('Data to store in DB : ', combinedData);
       const createdProfile = await createProfile(combinedData);
+      Cookies.set('agentId', createdProfile._id);
       onImport({ ...createdProfile, generatedSummary: summary });
 
       console.log("createdProfile : ", createdProfile);

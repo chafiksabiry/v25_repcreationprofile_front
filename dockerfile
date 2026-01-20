@@ -7,16 +7,16 @@ WORKDIR /app
 # Copy package.json and package-lock.json to install dependencies
 COPY package*.json ./
 
-ENV VITE_API_URL=https://api-repcreationwizard.harx.ai/api
-ENV VITE_AUTH_API_URL=https://api-registration.harx.ai/api
+ENV VITE_API_URL=/api
+ENV VITE_AUTH_API_URL=https://v25registrationbackend-production.up.railway.app/api
 ENV VITE_REP_ORCHESTRATOR_URL=/reporchestrator
-ENV VITE_REP_ORCHESTRATOR_URL_STANDALONE=https://rep-orchestrator.harx.ai/
+ENV VITE_REP_ORCHESTRATOR_URL_STANDALONE=https://harxv25reporchestratorfront.netlify.app/
 ENV VITE_RUN_MODE=in-app
 #ENV VITE_RUN_MODE=standalone
 ENV VITE_STANDALONE_USER_ID=681e2d9b4d60b1ff380960f0
 #user id for standalone mode 
 ENV VITE_STANDALONE_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODFlMmQ5YjRkNjBiMWZmMzgwOTYwZjAiLCJpYXQiOjE3NDY4MDgzODB9.aIKpQumOPHJekxzSgDkB1r0ax5BAUE_QErs_chL5-mg
-ENV VITE_FRONT_URL=https://rep-profile-creation.harx.ai/
+ENV VITE_FRONT_URL=https://harxv25repcreationprofile.netlify.app/
 # Install dependencies
 RUN npm install
 

@@ -48,14 +48,14 @@ const getUserIPHistory = async (userId) => {
   try {
     const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL;
     const token = localStorage.getItem('token');
-    
+
     const response = await axios.get(`${AUTH_API_URL}/users/${userId}/ip-history`, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
-    
+
     return response.data;
   } catch (error) {
     console.error('Error fetching IP history:', error);
@@ -68,10 +68,10 @@ const getFirstLoginLocation = (ipHistory) => {
   if (!ipHistory || !ipHistory.data || !Array.isArray(ipHistory.data)) {
     return null;
   }
-  
+
   // Find the first login action in the history
   const firstLogin = ipHistory.data.find(entry => entry.action === 'login');
-  
+
   if (firstLogin && firstLogin.locationInfo && firstLogin.locationInfo.location) {
     return {
       countryCode: firstLogin.locationInfo.location.countryCode,
@@ -80,7 +80,7 @@ const getFirstLoginLocation = (ipHistory) => {
       region: firstLogin.locationInfo.region
     };
   }
-  
+
   return null;
 };
 
@@ -91,19 +91,19 @@ const getUserId = (profileData) => {
   if (cookieUserId) {
     return cookieUserId;
   }
-  
+
   // Try standalone mode
   if (import.meta.env.VITE_RUN_MODE === 'standalone') {
     return import.meta.env.VITE_STANDALONE_USER_ID;
   }
-  
+
   return null;
 };
 
 // Move ExperienceForm outside the main component
 const ExperienceForm = ({ experience, onSubmit, isNew = false }) => {
   console.log('ExperienceForm rendered with:', { experience, isNew });
-  
+
   const [formData, setFormData] = useState({
     title: experience.title || '',
     company: experience.company || '',
@@ -185,7 +185,7 @@ const ExperienceForm = ({ experience, onSubmit, isNew = false }) => {
 
   const handleSubmit = () => {
     console.log('Form data before submission:', formData);
-    
+
     // Convert dates to proper format before submitting
     const experienceData = {
       ...formData,
@@ -383,6 +383,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     professional: '',
     soft: ''
   });
+  const [skillSearch, setSkillSearch] = useState('');
   const [tempProfileDescription, setTempProfileDescription] = useState('');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [countries, setCountries] = useState([]);
@@ -418,7 +419,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     availability: false,
     experience: false
   });
-  
+
   // New state for country mismatch detection
   const [firstLoginLocation, setFirstLoginLocation] = useState(null);
 
@@ -434,7 +435,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   useEffect(() => {
     if (profileData) {
       console.log('🔍 Initializing editedProfile with profileData:', profileData);
-      
+
       setEditedProfile({
         ...profileData,
         skills: {
@@ -455,9 +456,9 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         experience: profileData.experience || [],
         availability: profileData.availability || {}
       });
-      
+
       setTempProfileDescription(profileData.professionalSummary?.profileDescription || '');
-      
+
       console.log('🔍 EditedProfile initialized');
     }
   }, [profileData]);
@@ -478,7 +479,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
         const ipHistory = await getUserIPHistory(userId);
         const firstLogin = getFirstLoginLocation(ipHistory);
-        
+
         if (firstLogin) {
           setFirstLoginLocation(firstLogin);
         }
@@ -533,17 +534,17 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     const loadCountries = async () => {
       try {
         const countriesData = await getTimezones();
-        
+
         // Remove duplications based on countryCode
-        const uniqueCountries = countriesData.filter((country, index, self) => 
+        const uniqueCountries = countriesData.filter((country, index, self) =>
           index === self.findIndex(c => c.countryCode === country.countryCode)
         );
-        
+
         // Sort countries alphabetically by name for better UX
-        const sortedCountries = uniqueCountries.sort((a, b) => 
+        const sortedCountries = uniqueCountries.sort((a, b) =>
           a.countryName.localeCompare(b.countryName)
         );
-        
+
         setCountries(sortedCountries);
         console.log(`Loaded ${sortedCountries.length} unique countries (filtered from ${countriesData.length} total)`);
       } catch (error) {
@@ -560,12 +561,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       try {
         const skillTypes = ['technical', 'professional', 'soft'];
         const skillsData = {};
-        
+
         for (const skillType of skillTypes) {
           const groupedSkills = await getSkillsGrouped(skillType);
           skillsData[skillType] = groupedSkills;
         }
-        
+
         setAvailableSkills(skillsData);
         console.log('Loaded skills data:', skillsData);
       } catch (error) {
@@ -660,7 +661,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   }, []);
 
   // Filter countries based on search
-  const filteredCountries = countries.filter(country => 
+  const filteredCountries = countries.filter(country =>
     country.countryName.toLowerCase().includes(countrySearch.toLowerCase()) ||
     country.countryCode.toLowerCase().includes(countrySearch.toLowerCase())
   );
@@ -671,7 +672,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     setCountrySearch('');
     setIsSearching(false);
     handleProfileChange('country', country);
-    
+
     // Auto-suggest timezone based on country
     suggestTimezoneForCountry(country);
   };
@@ -679,17 +680,17 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   // Suggest primary timezone for selected country
   const suggestTimezoneForCountry = (selectedCountry, forceUpdate = false) => {
     if (!selectedCountry || !selectedCountry.countryCode) return;
-    
+
     // Find primary timezone for this country (usually the capital or most common one)
-    const countryTimezones = countries.filter(tz => 
+    const countryTimezones = countries.filter(tz =>
       tz.countryCode === selectedCountry.countryCode
     );
-    
+
     if (countryTimezones.length > 0) {
       // Sort by GMT offset to get a consistent primary timezone
       // You could also prioritize by population or capital city if that data is available
       const primaryTimezone = countryTimezones.sort((a, b) => a.gmtOffset - b.gmtOffset)[0];
-      
+
       // Auto-suggest this timezone (only if no timezone is currently set or if forced)
       if (!editedProfile.availability?.timeZone || forceUpdate) {
         handleAvailabilityChangeLocal('timeZone', primaryTimezone);
@@ -735,7 +736,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   };
 
   // Filter timezones based on search
-  const filteredTimezones = countries.filter(timezone => 
+  const filteredTimezones = countries.filter(timezone =>
     timezone.countryName.toLowerCase().includes(timezoneSearch.toLowerCase()) ||
     timezone.zoneName.toLowerCase().includes(timezoneSearch.toLowerCase()) ||
     timezone.countryCode.toLowerCase().includes(timezoneSearch.toLowerCase())
@@ -777,12 +778,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   // Get current timezone object
   const getCurrentTimezone = () => {
     if (!editedProfile.availability?.timeZone) return null;
-    
+
     // If timeZone is already an object (as it should be), return it directly
     if (typeof editedProfile.availability.timeZone === 'object') {
       return editedProfile.availability.timeZone;
     }
-    
+
     // Fallback: if it's just an ID string, find it in countries list
     return countries.find(tz => tz._id === editedProfile.availability.timeZone);
   };
@@ -791,22 +792,22 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   const checkTimezoneCountryMatch = () => {
     const currentTimezone = getCurrentTimezone();
     const selectedCountry = editedProfile.personalInfo?.country;
-    
+
     if (!currentTimezone || !selectedCountry) return { matches: true, message: '' };
-    
+
     const selectedCountryCode = typeof selectedCountry === 'object' ? selectedCountry.countryCode : selectedCountry;
     const timezoneCountryCode = currentTimezone.countryCode;
-    
+
     if (selectedCountryCode !== timezoneCountryCode) {
       const timezoneCountryName = countries.find(c => c.countryCode === timezoneCountryCode)?.countryName || 'Unknown';
       const selectedCountryName = typeof selectedCountry === 'object' ? selectedCountry.countryName : selectedCountry;
-      
+
       return {
         matches: false,
         message: `Your timezone is set to ${timezoneCountryName}, but your country is ${selectedCountryName}. This is fine if you work across time zones.`
       };
     }
-    
+
     return { matches: true, message: '' };
   };
 
@@ -816,17 +817,17 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       return null;
     }
 
-    const currentCountryCode = typeof currentCountry === 'object' 
-      ? currentCountry.countryCode 
+    const currentCountryCode = typeof currentCountry === 'object'
+      ? currentCountry.countryCode
       : currentCountry;
-    
+
     const firstLoginCountryCode = firstLoginLocation.countryCode;
-    
+
     if (currentCountryCode !== firstLoginCountryCode) {
-      const currentCountryName = typeof currentCountry === 'object' 
-        ? currentCountry.countryName 
+      const currentCountryName = typeof currentCountry === 'object'
+        ? currentCountry.countryName
         : countries.find(c => c.countryCode === currentCountryCode)?.countryName || currentCountryCode;
-      
+
       return {
         profileCountry: {
           code: currentCountryCode,
@@ -840,14 +841,14 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         }
       };
     }
-    
+
     return null;
   };
 
   // Component to render country mismatch warning under the country field
   const CountryMismatchWarning = ({ currentCountry }) => {
     const mismatch = checkCountryMismatch(currentCountry);
-    
+
     if (!mismatch) return null;
 
     return (
@@ -901,25 +902,25 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     }
 
     // Validate country
-    const countryValue = typeof editedProfile.personalInfo.country === 'object' 
-      ? editedProfile.personalInfo.country?.countryCode 
+    const countryValue = typeof editedProfile.personalInfo.country === 'object'
+      ? editedProfile.personalInfo.country?.countryCode
       : editedProfile.personalInfo.country;
     if (!countryValue?.trim()) {
       errors.country = 'Country is required';
       console.error('Country validation failed:', errors.country);
     }
 
-/*     // Validate email
-    if (!editedProfile.professionalSummary.currentRole?.trim()) {
-      errors.currentRole = 'Current role is required';
-      console.error('Current role validation failed:', errors.currentRole);
-    } */
+    /*     // Validate email
+        if (!editedProfile.professionalSummary.currentRole?.trim()) {
+          errors.currentRole = 'Current role is required';
+          console.error('Current role validation failed:', errors.currentRole);
+        } */
 
-/*     // Validate years of experience
-    if (!editedProfile.professionalSummary.yearsOfExperience?.trim()) {
-      errors.yearsExperience = 'Years of experience is required';
-      console.error('Years of experience validation failed:', errors.yearsExperience);
-    } */
+    /*     // Validate years of experience
+        if (!editedProfile.professionalSummary.yearsOfExperience?.trim()) {
+          errors.yearsExperience = 'Years of experience is required';
+          console.error('Years of experience validation failed:', errors.yearsExperience);
+        } */
 
     // Validate industries (at least one required)
     if (!editedProfile.professionalSummary.industries?.length) {
@@ -931,8 +932,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     if (!editedProfile.professionalSummary.notableCompanies?.length) {
       errors.companies = 'At least one notable company is required';
       console.error('Companies validation failed:', errors.companies);
-    }  
-    
+    }
+
     if (!editedProfile.personalInfo.email?.trim()) {
       errors.email = 'Email is required';
       console.error('Email validation failed:', errors.email);
@@ -964,70 +965,70 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   };
 
   const handleProfileChange = (field, value) => {
-      // Update the profile state immediately for UI responsiveness
-      const updatedPersonalInfo = {
-        ...editedProfile.personalInfo,
-        [field]: value
-      };
-  
-      const updatedProfile = {
-        ...editedProfile,
-        personalInfo: updatedPersonalInfo
-      };
-  
-      setEditedProfile(updatedProfile);
+    // Update the profile state immediately for UI responsiveness
+    const updatedPersonalInfo = {
+      ...editedProfile.personalInfo,
+      [field]: value
+    };
+
+    const updatedProfile = {
+      ...editedProfile,
+      personalInfo: updatedPersonalInfo
+    };
+
+    setEditedProfile(updatedProfile);
     setHasUnsavedChanges(true);
     setModifiedSections(prev => ({ ...prev, personalInfo: true }));
-  
-      // Validation rules
-      const validations = {
-        name: (val) => val.trim() ? '' : 'Name is required',
+
+    // Validation rules
+    const validations = {
+      name: (val) => val.trim() ? '' : 'Name is required',
       country: (val) => {
         const countryValue = typeof val === 'object' ? val?.countryCode : val;
         return countryValue?.trim() ? '' : 'Country is required';
       },
-        email: (val) => {
-          if (!val.trim()) return 'Email is required';
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          return emailRegex.test(val) ? '' : 'Please enter a valid email address';
-        },
-        phone: (val) => {
-          if (!val.trim()) return 'Phone is required';
-          const phoneRegex = /^\+?[\d\s-]{10,}$/;
-          return phoneRegex.test(val) ? '' : 'Please enter a valid phone number';
-        },
-        languages: (val) => val.length === 0 ? 'At least one language is required' : ''
-      };
-  
+      email: (val) => {
+        if (!val.trim()) return 'Email is required';
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(val) ? '' : 'Please enter a valid email address';
+      },
+      phone: (val) => {
+        if (!val.trim()) return 'Phone is required';
+        const phoneRegex = /^\+?[\d\s-]{10,}$/;
+        return phoneRegex.test(val) ? '' : 'Please enter a valid phone number';
+      },
+      languages: (val) => val.length === 0 ? 'At least one language is required' : ''
+    };
+
     // Get the appropriate validation function
-      const validateField = validations[field] || ((val) => val.trim() ? '' : `${field.charAt(0).toUpperCase() + field.slice(1)} is required`);
-  
-      // Run validation
-      const validationError = validateField(value);
-  
-      // Update validation errors state
-      setValidationErrors(prev => ({
-        ...prev,
-        [field]: validationError
-      }));
+    const validateField = validations[field] || ((val) => val.trim() ? '' : `${field.charAt(0).toUpperCase() + field.slice(1)} is required`);
+
+    // Run validation
+    const validationError = validateField(value);
+
+    // Update validation errors state
+    setValidationErrors(prev => ({
+      ...prev,
+      [field]: validationError
+    }));
   };
-  
+
   const addIndustry = async (selectedIndustry) => {
     if (selectedIndustry) {
       try {
         // Check if industry is already selected
-        const isAlreadySelected = editedProfile.professionalSummary.industries.some(industry => 
+        const isAlreadySelected = editedProfile.professionalSummary.industries.some(industry =>
           (typeof industry === 'object' ? industry._id : industry) === selectedIndustry._id
         );
-        
+
         if (isAlreadySelected) return;
-        
+
         const updatedIndustries = [
           ...(editedProfile.professionalSummary.industries || []),
           selectedIndustry
         ];
         console.log("updated industries :", updatedIndustries);
-        
+
         // Clear the industry validation error since we're adding one
         setValidationErrors(prev => ({
           ...prev,
@@ -1078,7 +1079,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           industries: updatedIndustries
         }
       }));
-      
+
       setHasUnsavedChanges(true);
       setModifiedSections(prev => ({ ...prev, professionalSummary: true }));
     } catch (error) {
@@ -1090,12 +1091,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     if (selectedActivity) {
       try {
         // Check if activity is already selected
-        const isAlreadySelected = (editedProfile.professionalSummary.activities || []).some(activity => 
+        const isAlreadySelected = (editedProfile.professionalSummary.activities || []).some(activity =>
           (typeof activity === 'object' ? activity._id : activity) === selectedActivity._id
         );
-        
+
         if (isAlreadySelected) return;
-        
+
         const updatedActivities = [
           ...(editedProfile.professionalSummary.activities || []),
           selectedActivity
@@ -1132,7 +1133,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           activities: updatedActivities
         }
       }));
-      
+
       setHasUnsavedChanges(true);
       setModifiedSections(prev => ({ ...prev, professionalSummary: true }));
     } catch (error) {
@@ -1198,7 +1199,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           notableCompanies: updatedCompanies
         }
       }));
-      
+
       setHasUnsavedChanges(true);
       setModifiedSections(prev => ({ ...prev, professionalSummary: true }));
     } catch (error) {
@@ -1217,11 +1218,11 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     }
     try {
       // Check if language is already selected
-      const isAlreadySelected = editedProfile.personalInfo.languages.some(lang => 
-        lang.language._id === tempLanguage.languageObj._id || 
+      const isAlreadySelected = editedProfile.personalInfo.languages.some(lang =>
+        lang.language._id === tempLanguage.languageObj._id ||
         lang.language === tempLanguage.languageObj._id
       );
-      
+
       if (isAlreadySelected) {
         setValidationErrors(prev => ({
           ...prev,
@@ -1229,13 +1230,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         }));
         return;
       }
-      
+
       // Add language with new structure
       const languageEntry = {
         language: tempLanguage.languageObj,
         proficiency: tempLanguage.proficiency
       };
-      
+
       const updatedLanguages = [
         ...editedProfile.personalInfo.languages,
         languageEntry
@@ -1288,7 +1289,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           languages: updatedLanguages
         }
       }));
-      
+
       setHasUnsavedChanges(true);
       setModifiedSections(prev => ({ ...prev, personalInfo: true }));
     } catch (error) {
@@ -1298,7 +1299,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
   const updateLanguageProficiency = async (index, newProficiency) => {
     try {
-      const updatedLanguages = editedProfile.personalInfo.languages.map((lang, i) => 
+      const updatedLanguages = editedProfile.personalInfo.languages.map((lang, i) =>
         i === index ? { ...lang, proficiency: newProficiency } : lang
       );
 
@@ -1310,7 +1311,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           languages: updatedLanguages
         }
       }));
-      
+
       setHasUnsavedChanges(true);
       setModifiedSections(prev => ({ ...prev, personalInfo: true }));
     } catch (error) {
@@ -1324,11 +1325,11 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   };
 
   const regenerateSummary = async () => {
-      try {
-        setLoading(true);
-        const newSummary = await generateSummary(editedProfile);
-        console.log('Generated summary:', newSummary); // Temporaire pour debug
-      
+    try {
+      setLoading(true);
+      const newSummary = await generateSummary(editedProfile);
+      console.log('Generated summary:', newSummary); // Temporaire pour debug
+
       // Update only local state, don't save to database yet
       setEditedSummary(newSummary);
       setEditedProfile(prev => ({
@@ -1344,7 +1345,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       setModifiedSections(prev => ({ ...prev, professionalSummary: true }));
       setIsEditing(false);
       showToast('Professional summary has been regenerated! Click Save to apply changes.');
-      
+
     } catch (error) {
       console.error('Failed to regenerate summary:', error);
       showToast('Failed to regenerate summary. Please try again.', 'error');
@@ -1372,36 +1373,36 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   const pushToRepsProfile = () => {
     const { isValid, errors } = validateProfile();
     console.log('validateProfile() result:', isValid);
-    
+
     if (isValid) {
       // Update the isBasicProfileCompleted field to true
       updateProfileData(editedProfile._id, { isBasicProfileCompleted: true })
         .then(() => {
           // Redirect to external website after successful update
-          const profileUrl = import.meta.env.VITE_RUN_MODE === 'standalone' 
-            ? import.meta.env.VITE_REP_ORCHESTRATOR_URL_STANDALONE 
+          const profileUrl = import.meta.env.VITE_RUN_MODE === 'standalone'
+            ? import.meta.env.VITE_REP_ORCHESTRATOR_URL_STANDALONE
             : import.meta.env.VITE_REP_ORCHESTRATOR_URL;
           window.location.href = profileUrl;
         })
         .catch(error => {
           console.error('Error updating isBasicProfileCompleted:', error);
           // Redirect anyway even if the update fails
-          const profileUrl = import.meta.env.VITE_RUN_MODE === 'standalone' 
-            ? import.meta.env.VITE_REP_ORCHESTRATOR_URL_STANDALONE 
+          const profileUrl = import.meta.env.VITE_RUN_MODE === 'standalone'
+            ? import.meta.env.VITE_REP_ORCHESTRATOR_URL_STANDALONE
             : import.meta.env.VITE_REP_ORCHESTRATOR_URL;
           window.location.href = profileUrl;
         });
     } else {
       // Update validation errors state
       setValidationErrors(errors);
-      
+
       // Use setTimeout to ensure the DOM has updated with the error elements
       setTimeout(() => {
         const firstErrorKey = Object.keys(errors)[0];
         const errorElement = document.getElementById(`error-${firstErrorKey}`);
         if (errorElement) {
           errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          
+
           // Add a temporary highlight effect
           errorElement.classList.add('highlight-error');
           setTimeout(() => {
@@ -1432,10 +1433,10 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
   const renderSkillSection = (title, skills, type) => {
     console.log(`🔍 renderSkillSection called:`, { title, skills, type, skillsType: typeof skills, isArray: Array.isArray(skills) });
-    
+
     // Ensure skills is always an array
     const safeSkills = Array.isArray(skills) ? skills : [];
-    
+
     console.log(`🔍 safeSkills:`, safeSkills);
 
     const handleAdd = async () => {
@@ -1443,13 +1444,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         if (type === 'industries') {
           if (!tempIndustry.trim()) return;
           const updatedIndustries = [...(editedProfile.professionalSummary.industries || []), tempIndustry];
-          
+
           // Clear validation error when adding industry
           setValidationErrors(prev => ({
             ...prev,
             industries: ''
           }));
-          
+
           // Local update only
           setEditedProfile(prev => ({
             ...prev,
@@ -1458,21 +1459,21 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               industries: updatedIndustries
             }
           }));
-          
+
           setTempIndustry('');
           setHasUnsavedChanges(true);
           setModifiedSections(prev => ({ ...prev, professionalSummary: true }));
-          
+
         } else if (type === 'notableCompanies') {
           if (!tempCompany.trim()) return;
           const updatedCompanies = [...(editedProfile.professionalSummary.notableCompanies || []), tempCompany];
-          
+
           // Clear validation error when adding company
           setValidationErrors(prev => ({
             ...prev,
             companies: ''
           }));
-          
+
           // Local update only
           setEditedProfile(prev => ({
             ...prev,
@@ -1481,11 +1482,11 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               notableCompanies: updatedCompanies
             }
           }));
-          
+
           setTempCompany('');
           setHasUnsavedChanges(true);
           setModifiedSections(prev => ({ ...prev, professionalSummary: true }));
-          
+
         } else {
           // Handle skills (technical, professional, soft)
           // This will be handled by the new skill selector dropdown
@@ -1501,7 +1502,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       try {
         if (type === 'industries' || type === 'notableCompanies' || type === 'activities') {
           const updatedData = (editedProfile.professionalSummary?.[type] || []).filter((_, i) => i !== index);
-          
+
           // Set validation error if removing the last item (only for required fields)
           if (updatedData.length === 0 && type === 'industries') {
             setValidationErrors(prev => ({
@@ -1527,7 +1528,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               }));
             }
           }
-          
+
           // Local update only
           setEditedProfile(prev => ({
             ...prev,
@@ -1536,14 +1537,14 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               [type]: updatedData
             }
           }));
-          
+
           setHasUnsavedChanges(true);
           setModifiedSections(prev => ({ ...prev, professionalSummary: true }));
         } else {
           // Handle skills removal locally
           const currentSkills = editedProfile.skills?.[type] || [];
           const updatedSkills = currentSkills.filter((_, i) => i !== index);
-          
+
           // Update local state only
           setEditedProfile(prev => ({
             ...prev,
@@ -1552,7 +1553,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               [type]: updatedSkills
             }
           }));
-          
+
           setHasUnsavedChanges(true);
           setModifiedSections(prev => ({ ...prev, skills: true }));
         }
@@ -1565,7 +1566,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     const handleSkillSelect = (skill) => {
       if (type === 'technical' || type === 'professional' || type === 'soft') {
         const currentSkills = editedProfile.skills?.[type] || [];
-        
+
         // Check if skill is already selected - handle both structures
         const isAlreadySelected = currentSkills.some(s => {
           // Handle complex structure: s.skill._id
@@ -1578,18 +1579,18 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           }
           return false;
         });
-        
+
         if (isAlreadySelected) return;
-        
+
         // Create skill object with the expected structure
         const skillObject = {
           skill: skill,
           level: 0,
           details: ""
         };
-        
+
         const updatedSkills = [...currentSkills, skillObject];
-        
+
         // Update local state
         setEditedProfile(prev => ({
           ...prev,
@@ -1598,12 +1599,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
             [type]: updatedSkills
           }
         }));
-        
+
         setHasUnsavedChanges(true);
         setModifiedSections(prev => ({ ...prev, skills: true }));
-        
-        // Close the dropdown
+
+        // Close the dropdown and clear search
         setShowSkillDropdown(prev => ({ ...prev, [type]: false }));
+        setSkillSearch('');
       }
     };
 
@@ -1639,32 +1641,32 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               // Enhanced skill name extraction with better fallbacks for the real data structure
               const getSkillName = (skillData) => {
                 console.log('🔍 getSkillName processing:', skillData);
-                
+
                 // Handle string skills (legacy or simple format)
                 if (typeof skillData === 'string') return skillData;
-                
+
                 // Handle object skills
                 if (typeof skillData === 'object' && skillData !== null) {
                   // New structure: skill.skill.name
                   if (skillData.skill && typeof skillData.skill === 'object') {
                     return skillData.skill.name || skillData.skill.skill || skillData.skill.title || `Skill ${index + 1}`;
                   }
-                  
+
                   // Direct structure: skill.name
                   if (skillData.name) {
                     return skillData.name;
                   }
-                  
+
                   // Other possible properties
                   if (skillData.skill && typeof skillData.skill === 'string') {
                     return skillData.skill;
                   }
-                  
+
                   if (skillData.title) {
                     return skillData.title;
                   }
                 }
-                
+
                 // Fallback
                 return `Skill ${index + 1}`;
               };
@@ -1710,92 +1712,130 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     </svg>
                   </button>
                   {showSkillDropdown[type] && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto z-20">
-                      {Object.keys(skillData).length > 0 ? (
-                        Object.entries(skillData).map(([category, categorySkills], categoryIndex) => (
-                          <div key={category} className="mb-2 last:mb-0">
-                            {/* Category Header - Much more visible */}
-                            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 font-bold text-sm uppercase tracking-wide shadow-sm">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-white rounded-full"></div>
-                                <span>{category}</span>
-                                <div className="ml-auto text-xs bg-white/20 px-2 py-1 rounded-full">
-                                  {categorySkills.length} skills
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 flex flex-col max-h-[400px]">
+                      <div className="p-3 border-b sticky top-0 bg-white z-[60]">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder={`Search ${title.toLowerCase()}...`}
+                            className="w-full p-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+                            value={skillSearch}
+                            onChange={(e) => setSkillSearch(e.target.value)}
+                            autoFocus
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          {skillSearch && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSkillSearch('');
+                              }}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="overflow-y-auto flex-1">
+                        {(() => {
+                          // Filter skills based on search
+                          const filteredSkillData = {};
+                          let hasResults = false;
+
+                          Object.entries(skillData).forEach(([category, categorySkills]) => {
+                            const filtered = categorySkills.filter(skill =>
+                              skill.name.toLowerCase().includes(skillSearch.toLowerCase()) ||
+                              (skill.description && skill.description.toLowerCase().includes(skillSearch.toLowerCase()))
+                            );
+                            if (filtered.length > 0) {
+                              filteredSkillData[category] = filtered;
+                              hasResults = true;
+                            }
+                          });
+
+                          return hasResults ? (
+                            Object.entries(filteredSkillData).map(([category, categorySkills], categoryIndex) => (
+                              <div key={category} className="mb-0">
+                                <div className="sticky top-0 bg-gray-50 text-gray-600 px-4 py-2 font-bold text-xs uppercase tracking-wider border-y border-gray-100 z-50">
+                                  <div className="flex items-center gap-2">
+                                    <span>{category}</span>
+                                    <span className="ml-auto text-[10px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">
+                                      {categorySkills.length}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="bg-white">
+                                  {categorySkills.map((skill, skillIndex) => {
+                                    const isSelected = safeSkills.some(s => {
+                                      if (s.skill && typeof s.skill === 'object') {
+                                        return s.skill._id === skill._id || s.skill.name === skill.name;
+                                      }
+                                      if (typeof s === 'object') {
+                                        return s._id === skill._id || s.name === skill.name;
+                                      }
+                                      return false;
+                                    });
+
+                                    return (
+                                      <button
+                                        key={skill._id}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleSkillSelect(skill);
+                                        }}
+                                        disabled={isSelected}
+                                        className={`w-full px-6 py-3 text-left hover:bg-blue-50 flex items-center justify-between transition-colors duration-150 border-b border-gray-50 last:border-b-0 ${isSelected ? 'bg-green-50/50' : ''
+                                          }`}
+                                      >
+                                        <div className="flex flex-col flex-1">
+                                          <div className="flex items-center gap-2">
+                                            <span className={`text-sm font-semibold ${isSelected ? 'text-green-700' : 'text-gray-800'}`}>
+                                              {skill.name}
+                                            </span>
+                                          </div>
+                                          {skill.description && (
+                                            <span className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                                              {skill.description}
+                                            </span>
+                                          )}
+                                        </div>
+                                        {isSelected && (
+                                          <div className="flex items-center gap-1.5 ml-4 flex-shrink-0">
+                                            <span className="text-[10px] font-bold text-green-600 uppercase">Added</span>
+                                            <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                          </div>
+                                        )}
+                                      </button>
+                                    );
+                                  })}
                                 </div>
                               </div>
+                            ))
+                          ) : (
+                            <div className="p-8 text-center">
+                              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-3">
+                                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                              </div>
+                              <p className="text-gray-500 text-sm">No skills found matching "{skillSearch}"</p>
+                              <button
+                                onClick={() => setSkillSearch('')}
+                                className="mt-2 text-blue-600 text-sm font-medium hover:underline"
+                              >
+                                Clear search and see all
+                              </button>
                             </div>
-                            
-                            {/* Skills in this category */}
-                            <div className="bg-gray-50/30">
-                              {categorySkills.map((skill, skillIndex) => {
-                                // Enhanced skill selection detection for complex structure
-                                const isSelected = safeSkills.some(s => {
-                                  console.log('🔍 Checking if skill is selected:', { s, skill });
-                                  
-                                  // Handle string skills (legacy)
-                                  if (typeof s === 'string' && typeof skill === 'object') {
-                                    return s === skill.name || s === skill.skill;
-                                  }
-                                  
-                                  // Handle complex structure: s.skill._id === skill._id
-                                  if (s.skill && typeof s.skill === 'object' && typeof skill === 'object') {
-                                    return s.skill._id === skill._id || s.skill.name === skill.name;
-                                  }
-                                  
-                                  // Handle direct structure: s._id === skill._id
-                                  if (typeof s === 'object' && typeof skill === 'object') {
-                                    return s._id === skill._id || s.name === skill.name;
-                                  }
-                                  
-                                  // Handle string comparisons
-                                  if (typeof s === 'string' && typeof skill === 'string') {
-                                    return s === skill;
-                                  }
-                                  
-                                  return false;
-                                });
-                                
-                                return (
-                                  <button
-                                    key={skill._id}
-                                    onClick={() => handleSkillSelect(skill)}
-                                    disabled={isSelected}
-                                    className={`w-full px-6 py-3 text-left hover:bg-blue-50 flex items-center justify-between transition-colors duration-200 ${
-                                      isSelected 
-                                        ? 'bg-green-50 text-green-700 cursor-not-allowed' 
-                                        : 'text-gray-700 hover:text-blue-700'
-                                    } ${
-                                      skillIndex === categorySkills.length - 1 && categoryIndex === Object.keys(skillData).length - 1
-                                        ? 'rounded-b-lg' 
-                                        : ''
-                                    }`}
-                                  >
-                                    <div className="flex flex-col flex-1">
-                                      <div className="flex items-center gap-2">
-                                        <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-green-500' : 'bg-blue-400'}`}></div>
-                                        <span className="font-semibold text-sm">{skill.name}</span>
-                                      </div>
-                                      <span className="text-xs text-gray-500 ml-3.5 mt-1 leading-relaxed">
-                                        {skill.description}
-                                      </span>
-                                    </div>
-                                    {isSelected && (
-                                      <div className="flex items-center gap-2 ml-4">
-                                        <span className="text-xs font-medium text-green-600">Selected</span>
-                                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                      </div>
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="px-4 py-2 text-sm text-gray-500">No skills available</div>
-                      )}
+                          );
+                        })()}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1814,20 +1854,19 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto z-20">
                       {availableIndustries.length > 0 ? (
                         availableIndustries.map((industry) => {
-                          const isSelected = safeSkills.some(item => 
+                          const isSelected = safeSkills.some(item =>
                             (typeof item === 'object' ? item._id : item) === industry._id
                           );
-                          
+
                           return (
                             <button
                               key={industry._id}
                               onClick={() => addIndustry(industry)}
                               disabled={isSelected}
-                              className={`w-full px-6 py-3 text-left hover:bg-blue-50 flex items-center justify-between transition-colors duration-200 ${
-                                isSelected 
-                                  ? 'bg-green-50 text-green-700 cursor-not-allowed' 
+                              className={`w-full px-6 py-3 text-left hover:bg-blue-50 flex items-center justify-between transition-colors duration-200 ${isSelected
+                                  ? 'bg-green-50 text-green-700 cursor-not-allowed'
                                   : 'text-gray-700 hover:text-blue-700'
-                              }`}
+                                }`}
                             >
                               <div className="flex flex-col flex-1">
                                 <div className="flex items-center gap-2">
@@ -1889,24 +1928,23 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                 </div>
                               </div>
                             </div>
-                            
+
                             {/* Activities in this category */}
                             <div className="bg-gray-50/30">
                               {categoryActivities.map((activity) => {
-                                const isSelected = safeSkills.some(item => 
+                                const isSelected = safeSkills.some(item =>
                                   (typeof item === 'object' ? item._id : item) === activity._id
                                 );
-                                
+
                                 return (
                                   <button
                                     key={activity._id}
                                     onClick={() => addActivity(activity)}
                                     disabled={isSelected}
-                                    className={`w-full px-6 py-3 text-left hover:bg-blue-50 flex items-center justify-between transition-colors duration-200 ${
-                                      isSelected 
-                                        ? 'bg-green-50 text-green-700 cursor-not-allowed' 
+                                    className={`w-full px-6 py-3 text-left hover:bg-blue-50 flex items-center justify-between transition-colors duration-200 ${isSelected
+                                        ? 'bg-green-50 text-green-700 cursor-not-allowed'
                                         : 'text-gray-700 hover:text-blue-700'
-                                    }`}
+                                      }`}
                                   >
                                     <div className="flex flex-col flex-1">
                                       <div className="flex items-center gap-2">
@@ -1939,28 +1977,28 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 </div>
               ) : (
                 <>
-              <input
-                type="text"
-                value={getTempValue()}
-                onChange={(e) => handleTempChange(e.target.value)}
-                className="flex-1 p-2 border rounded-md bg-white/50"
-                placeholder={`Add ${title.toLowerCase()}`}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAdd();
-                  }
-                }}
-              />
-              <button
-                onClick={handleAdd}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add
-              </button>
+                  <input
+                    type="text"
+                    value={getTempValue()}
+                    onChange={(e) => handleTempChange(e.target.value)}
+                    className="flex-1 p-2 border rounded-md bg-white/50"
+                    placeholder={`Add ${title.toLowerCase()}`}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAdd();
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={handleAdd}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add
+                  </button>
                 </>
               )}
             </div>
@@ -1977,12 +2015,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       try {
         const dateObj = new Date(date);
         if (isNaN(dateObj.getTime())) return date;
-        
+
         // Format as dd/mm/yyyy
         const day = dateObj.getDate().toString().padStart(2, '0');
         const month = (dateObj.getMonth() + 1).toString().padStart(2, '0'); // +1 because months are 0-indexed
         const year = dateObj.getFullYear();
-        
+
         return `${day}/${month}/${year}`;
       } catch (error) {
         console.error('Error formatting date:', error);
@@ -2195,27 +2233,14 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
   // NEW: Local availability change handler
   const handleAvailabilityChangeLocal = (field, value) => {
-      let updatedAvailability;
-      
-      if (field === 'schedule') {
-        // Handle schedule updates
-        updatedAvailability = {
-          ...editedProfile.availability,
-          schedule: value
-        };
-      } else if (field === 'timeZone' || field === 'flexibility') {
-        // Handle single field updates
-        updatedAvailability = {
-          ...editedProfile.availability,
-          [field]: value
-        };
+    setEditedProfile(prev => ({
+      ...prev,
+      availability: {
+        ...prev.availability,
+        [field]: value
       }
+    }));
 
-      setEditedProfile(prev => ({
-        ...prev,
-        availability: updatedAvailability
-      }));
-    
     setHasUnsavedChanges(true);
     setModifiedSections(prev => ({ ...prev, availability: true }));
   };
@@ -2224,7 +2249,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   const saveProfile = async () => {
     try {
       setIsSaving(true);
-      
+
       // Validate before saving
       const { isValid, errors } = validateProfile();
       if (!isValid) {
@@ -2237,23 +2262,23 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       if (modifiedSections.personalInfo) {
         await updateBasicInfo(editedProfile._id, editedProfile.personalInfo);
       }
-      
+
       if (modifiedSections.skills) {
         await updateSkills(editedProfile._id, editedProfile.skills);
       }
-      
+
       if (modifiedSections.professionalSummary) {
         // Extract only IDs for industries and activities before saving
         const professionalSummaryToSave = {
           ...editedProfile.professionalSummary,
-          industries: editedProfile.professionalSummary.industries?.map(industry => 
+          industries: editedProfile.professionalSummary.industries?.map(industry =>
             typeof industry === 'object' ? industry._id : industry
           ) || [],
-          activities: editedProfile.professionalSummary.activities?.map(activity => 
+          activities: editedProfile.professionalSummary.activities?.map(activity =>
             typeof activity === 'object' ? activity._id : activity
           ) || []
         };
-        
+
         await updateProfileData(editedProfile._id, {
           professionalSummary: professionalSummaryToSave
         });
@@ -2277,11 +2302,11 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         availability: false,
         experience: false
       });
-      
+
       setHasUnsavedChanges(false);
       setEditingProfile(false);
       showToast('Profile saved successfully!', 'success');
-      
+
     } catch (error) {
       console.error('Error saving profile:', error);
       showToast('Error saving profile. Please try again.', 'error');
@@ -2293,7 +2318,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   // NEW: Reset modification flags when canceling edit
   const cancelEdit = () => {
     console.log('🔍 Canceling edit, resetting to original profileData:', profileData);
-    
+
     setEditingProfile(false);
     setHasUnsavedChanges(false);
     setModifiedSections({
@@ -2303,7 +2328,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       availability: false,
       experience: false
     });
-    
+
     // Reset to original profile data with safe defaults
     if (profileData) {
       setEditedProfile({
@@ -2326,11 +2351,11 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         experience: profileData.experience || [],
         availability: profileData.availability || {}
       });
-      
+
       // Reset the edited summary to the original
       setEditedSummary(profileData.professionalSummary?.profileDescription || '');
     }
-    
+
     console.log('🔍 Edit canceled, profile reset');
   };
 
@@ -2344,7 +2369,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
             <div className="flex items-center gap-3">
               {editingProfile ? (
                 <div className="flex items-center gap-2">
-            <button
+                  <button
                     onClick={cancelEdit}
                     disabled={isSaving}
                     className="px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-gray-600 bg-gray-50 hover:bg-gray-100 disabled:opacity-50"
@@ -2367,7 +2392,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     ) : (
                       '💾 Save'
                     )}
-            </button>
+                  </button>
                 </div>
               ) : (
                 <button
@@ -2398,9 +2423,9 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">🌍 Country</h3>
                   <div className="relative country-selector">
-                  <input
-                    type="text"
-                      value={isSearching ? countrySearch : (typeof editedProfile.personalInfo.country === 'object' 
+                    <input
+                      type="text"
+                      value={isSearching ? countrySearch : (typeof editedProfile.personalInfo.country === 'object'
                         ? `${editedProfile.personalInfo.country?.countryName} (${editedProfile.personalInfo.country?.countryCode})`
                         : editedProfile.personalInfo.country || '')}
                       onChange={handleCountryInputChange}
@@ -2424,37 +2449,37 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                         </svg>
                       </button>
                     )}
-                                         {showCountryDropdown && (
-                       <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20">
-                         {editedProfile.personalInfo.country && (
-                           <button
-                             onClick={clearCountrySelection}
-                             className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 border-b border-gray-100 flex items-center gap-2"
-                           >
-                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                             </svg>
-                             Clear selection
-                           </button>
-                         )}
-                         {filteredCountries.length > 0 ? (
-                           filteredCountries.slice(0, 10).map((country) => (
-                             <button
-                               key={country._id}
-                               onClick={() => handleCountrySelect(country)}
-                               className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center justify-between border-b border-gray-100 last:border-b-0"
-                             >
-                               <span className="font-medium">{country.countryName}</span>
-                               <span className="text-gray-500 text-xs">{country.countryCode}</span>
-                             </button>
-                           ))
-                         ) : countrySearch ? (
-                           <div className="px-4 py-2 text-sm text-gray-500">No countries found matching "{countrySearch}"</div>
-                         ) : (
-                           <div className="px-4 py-2 text-sm text-gray-500">Start typing to search for countries</div>
-                         )}
-                       </div>
-                     )}
+                    {showCountryDropdown && (
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20">
+                        {editedProfile.personalInfo.country && (
+                          <button
+                            onClick={clearCountrySelection}
+                            className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 border-b border-gray-100 flex items-center gap-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Clear selection
+                          </button>
+                        )}
+                        {filteredCountries.length > 0 ? (
+                          filteredCountries.slice(0, 10).map((country) => (
+                            <button
+                              key={country._id}
+                              onClick={() => handleCountrySelect(country)}
+                              className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center justify-between border-b border-gray-100 last:border-b-0"
+                            >
+                              <span className="font-medium">{country.countryName}</span>
+                              <span className="text-gray-500 text-xs">{country.countryCode}</span>
+                            </button>
+                          ))
+                        ) : countrySearch ? (
+                          <div className="px-4 py-2 text-sm text-gray-500">No countries found matching "{countrySearch}"</div>
+                        ) : (
+                          <div className="px-4 py-2 text-sm text-gray-500">Start typing to search for countries</div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   {renderError(validationErrors.country, 'country')}
                   <CountryMismatchWarning currentCountry={editedProfile.personalInfo?.country} />
@@ -2489,7 +2514,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                         // Handle both old and new data structures
                         const languageName = typeof lang.language === 'object' ? lang.language.name : lang.language;
                         const languageCode = typeof lang.language === 'object' ? lang.language.code : (lang.iso639_1 || '');
-                        
+
                         return (
                           <div key={index} className="flex items-center gap-3 bg-white/50 px-4 py-2 rounded-full group relative hover:bg-white transition-colors duration-200">
                             <span className="text-sm font-medium text-gray-700">
@@ -2517,9 +2542,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                 {proficiencyLevels.map(level => (
                                   <button
                                     key={level.value}
-                                    className={`w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center justify-between group/item ${
-                                      lang.proficiency === level.value ? 'text-blue-600 bg-blue-50/50' : 'text-gray-700'
-                                    }`}
+                                    className={`w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center justify-between group/item ${lang.proficiency === level.value ? 'text-blue-600 bg-blue-50/50' : 'text-gray-700'
+                                      }`}
                                     onClick={async () => {
                                       await updateLanguageProficiency(index, level.value);
                                       // Close the dropdown after selecting a value
@@ -2575,13 +2599,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                           <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20">
                             {(() => {
                               const filteredLanguages = searchLanguages(availableLanguages, languageSearch);
-                              const selectedLanguageIds = editedProfile.personalInfo.languages.map(lang => 
+                              const selectedLanguageIds = editedProfile.personalInfo.languages.map(lang =>
                                 typeof lang.language === 'object' ? lang.language._id : lang.language
                               );
-                              const availableFilteredLanguages = filteredLanguages.filter(lang => 
+                              const availableFilteredLanguages = filteredLanguages.filter(lang =>
                                 !selectedLanguageIds.includes(lang._id)
                               );
-                              
+
                               return availableFilteredLanguages.length > 0 ? (
                                 availableFilteredLanguages.slice(0, 10).map((language) => (
                                   <button
@@ -2628,9 +2652,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                           {proficiencyLevels.map(level => (
                             <button
                               key={level.value}
-                              className={`w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center justify-between ${
-                                tempLanguage.proficiency === level.value ? 'text-blue-600 bg-blue-50/50' : 'text-gray-700'
-              }`}
+                              className={`w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center justify-between ${tempLanguage.proficiency === level.value ? 'text-blue-600 bg-blue-50/50' : 'text-gray-700'
+                                }`}
                               onClick={() => {
                                 setTempLanguage(prev => ({ ...prev, proficiency: level.value }));
                                 // Hide dropdown after selection
@@ -2658,19 +2681,18 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                         Add
                       </button>
                     </div>
-                    
+
                     {/* Proficiency Level Descriptions */}
                     <div className="mt-4 bg-white rounded-lg p-4 border border-gray-200">
                       <h4 className="text-sm font-medium text-gray-700 mb-3">Language Proficiency Levels:</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {proficiencyLevels.map(level => (
-                          <div 
+                          <div
                             key={level.value}
-                            className={`p-3 rounded-lg border ${
-                              tempLanguage.proficiency === level.value 
-                                ? 'border-blue-200 bg-blue-50' 
+                            className={`p-3 rounded-lg border ${tempLanguage.proficiency === level.value
+                                ? 'border-blue-200 bg-blue-50'
                                 : 'border-gray-100 hover:bg-gray-50'
-                            }`}
+                              }`}
                           >
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-medium text-gray-800">{level.label}</span>
@@ -2698,8 +2720,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">🌍 Country</h3>
                   <p className="text-xl font-semibold text-gray-800">
-                    {typeof editedProfile.personalInfo.country === 'object' 
-                      ? `${editedProfile.personalInfo.country?.countryName} (${editedProfile.personalInfo.country?.countryCode})` 
+                    {typeof editedProfile.personalInfo.country === 'object'
+                      ? `${editedProfile.personalInfo.country?.countryName} (${editedProfile.personalInfo.country?.countryCode})`
                       : editedProfile.personalInfo.country || 'Not specified'}
                   </p>
                   {renderError(validationErrors.country, 'country')}
@@ -2723,7 +2745,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                         // Handle both old and new data structures
                         const languageName = typeof lang.language === 'object' ? lang.language.name : lang.language;
                         const languageCode = typeof lang.language === 'object' ? lang.language.code : (lang.iso639_1 || '');
-                        
+
                         return (
                           <span
                             key={index}
@@ -2767,7 +2789,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           {/* Availability Section */}
           <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-6">Working Hours & Availability</h3>
-            
+
             {editingProfile ? (
               <div className="space-y-6">
                 {/* Simple Working Hours and Days Selector */}
@@ -2814,16 +2836,35 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                       />
                       <button
                         onClick={() => {
-                          const defaultStart = editedProfile.availability?.tempHours?.start || '09:00';
-                          const defaultEnd = editedProfile.availability?.tempHours?.end || '17:00';
-                          const currentSchedule = editedProfile.availability?.schedule || [];
-                          const newSchedule = currentSchedule.map(day => ({
-                            ...day,
-                            hours: { start: defaultStart, end: defaultEnd }
-                          }));
-                          handleAvailabilityChangeLocal('schedule', newSchedule);
+                          setEditedProfile(prev => {
+                            const defaultStart = prev.availability?.tempHours?.start || '09:00';
+                            const defaultEnd = prev.availability?.tempHours?.end || '17:00';
+                            const currentSchedule = prev.availability?.schedule || [];
+
+                            if (currentSchedule.length === 0) {
+                              showToast('Please add at least one working day first', 'error');
+                              return prev;
+                            }
+
+                            const newSchedule = currentSchedule.map(day => ({
+                              ...day,
+                              hours: { start: defaultStart, end: defaultEnd }
+                            }));
+
+                            return {
+                              ...prev,
+                              availability: {
+                                ...prev.availability,
+                                schedule: newSchedule
+                              }
+                            };
+                          });
+
+                          setModifiedSections(prev => ({ ...prev, availability: true }));
+                          setHasUnsavedChanges(true);
+                          showToast('Working hours applied to selected days', 'success');
                         }}
-                        className="px-4 py-2 text-sm text-blue-600 bg-blue-50 rounded hover:bg-blue-100"
+                        className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-100 transition-colors"
                       >
                         Apply to Selected Days
                       </button>
@@ -2838,11 +2879,10 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                         return (
                           <div
                             key={day}
-                            className={`p-4 rounded-lg border ${
-                              daySchedule 
-                                ? 'border-blue-200 bg-blue-50 shadow-sm' 
+                            className={`p-4 rounded-lg border ${daySchedule
+                                ? 'border-blue-200 bg-blue-50 shadow-sm'
                                 : 'border-gray-200 bg-white hover:border-blue-200'
-                            }`}
+                              }`}
                           >
                             <div className="flex items-center justify-between">
                               <span className="font-medium text-gray-800">{day}</span>
@@ -2856,8 +2896,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                         value={daySchedule.hours.start}
                                         onChange={(e) => {
                                           const currentSchedule = editedProfile.availability?.schedule || [];
-                                          const newSchedule = currentSchedule.map(s => 
-                                            s.day === day 
+                                          const newSchedule = currentSchedule.map(s =>
+                                            s.day === day
                                               ? { ...s, hours: { ...s.hours, start: e.target.value } }
                                               : s
                                           );
@@ -2873,8 +2913,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                         value={daySchedule.hours.end}
                                         onChange={(e) => {
                                           const currentSchedule = editedProfile.availability?.schedule || [];
-                                          const newSchedule = currentSchedule.map(s => 
-                                            s.day === day 
+                                          const newSchedule = currentSchedule.map(s =>
+                                            s.day === day
                                               ? { ...s, hours: { ...s.hours, end: e.target.value } }
                                               : s
                                           );
@@ -2889,7 +2929,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                   onClick={() => {
                                     const currentSchedule = editedProfile.availability?.schedule || [];
                                     let newSchedule;
-                                    
+
                                     if (daySchedule) {
                                       newSchedule = currentSchedule.filter(s => s.day !== day);
                                     } else {
@@ -2906,11 +2946,10 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                     }
                                     handleAvailabilityChangeLocal('schedule', newSchedule);
                                   }}
-                                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                                    daySchedule 
-                                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${daySchedule
+                                      ? 'bg-blue-600 text-white hover:bg-blue-700'
                                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                  }`}
+                                    }`}
                                 >
                                   {daySchedule ? 'Remove' : 'Add'}
                                 </button>
@@ -2955,42 +2994,42 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                           </svg>
                         </button>
                       )}
-                    {showTimezoneDropdown && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20">
-                        {getCurrentTimezone() && (
-                          <button
-                            onClick={clearTimezoneSelection}
-                            className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 border-b border-gray-100 flex items-center gap-2"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            Clear selection
-                          </button>
-                        )}
-                        {filteredTimezones.length > 0 ? (
-                          filteredTimezones.slice(0, 10).map((timezone) => (
+                      {showTimezoneDropdown && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20">
+                          {getCurrentTimezone() && (
                             <button
-                              key={timezone._id}
-                              onClick={() => handleTimezoneSelect(timezone)}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
+                              onClick={clearTimezoneSelection}
+                              className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 border-b border-gray-100 flex items-center gap-2"
                             >
-                              <div className="flex flex-col">
-                                <span className="font-medium">{timezone.countryName}</span>
-                                <span className="text-xs text-gray-500">{timezone.zoneName}</span>
-                                <span className="text-xs text-blue-600">GMT{timezone.gmtOffset >= 0 ? '+' : ''}{Math.floor(timezone.gmtOffset / 3600)}:{Math.abs(timezone.gmtOffset % 3600 / 60).toString().padStart(2, '0')}</span>
-                              </div>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Clear selection
                             </button>
-                          ))
-                        ) : timezoneSearch ? (
-                          <div className="px-4 py-2 text-sm text-gray-500">No timezones found matching "{timezoneSearch}"</div>
-                        ) : (
-                          <div className="px-4 py-2 text-sm text-gray-500">Start typing to search for timezones</div>
-                        )}
-                      </div>
-                    )}
+                          )}
+                          {filteredTimezones.length > 0 ? (
+                            filteredTimezones.slice(0, 10).map((timezone) => (
+                              <button
+                                key={timezone._id}
+                                onClick={() => handleTimezoneSelect(timezone)}
+                                className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
+                              >
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{timezone.countryName}</span>
+                                  <span className="text-xs text-gray-500">{timezone.zoneName}</span>
+                                  <span className="text-xs text-blue-600">GMT{timezone.gmtOffset >= 0 ? '+' : ''}{Math.floor(timezone.gmtOffset / 3600)}:{Math.abs(timezone.gmtOffset % 3600 / 60).toString().padStart(2, '0')}</span>
+                                </div>
+                              </button>
+                            ))
+                          ) : timezoneSearch ? (
+                            <div className="px-4 py-2 text-sm text-gray-500">No timezones found matching "{timezoneSearch}"</div>
+                          ) : (
+                            <div className="px-4 py-2 text-sm text-gray-500">Start typing to search for timezones</div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    
+
                     {/* Suggest timezone button */}
                     <button
                       onClick={suggestTimezoneForCurrentCountry}
@@ -3003,7 +3042,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                       Suggest from Country
                     </button>
                   </div>
-                  
+
                   {/* Timezone-Country mismatch indicator */}
                   {(() => {
                     const matchCheck = checkTimezoneCountryMatch();
@@ -3046,11 +3085,10 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                             : [...currentFlexibility, option];
                           handleAvailabilityChangeLocal('flexibility', updatedFlexibility);
                         }}
-                        className={`px-4 py-2 rounded text-sm ${
-                          editedProfile.availability?.flexibility?.includes(option)
+                        className={`px-4 py-2 rounded text-sm ${editedProfile.availability?.flexibility?.includes(option)
                             ? 'bg-blue-600 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
+                          }`}
                       >
                         {option}
                       </button>
@@ -3081,12 +3119,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   <p className="text-gray-800">
                     {(() => {
                       const currentTz = getCurrentTimezone();
-                      return currentTz 
+                      return currentTz
                         ? `${currentTz.countryName} - ${currentTz.zoneName} (GMT${currentTz.gmtOffset >= 0 ? '+' : ''}${Math.floor(currentTz.gmtOffset / 3600)}:${Math.abs(currentTz.gmtOffset % 3600 / 60).toString().padStart(2, '0')})`
                         : 'Not specified';
                     })()}
                   </p>
-                  
+
                   {/* Timezone-Country mismatch indicator for read-only mode */}
                   {(() => {
                     const matchCheck = checkTimezoneCountryMatch();
@@ -3213,11 +3251,10 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
       {/* Add Toast Component */}
       {toast.show && (
-        <div className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg transition-all transform duration-500 ${
-          toast.type === 'success' 
-            ? 'bg-green-500 text-white' 
+        <div className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg transition-all transform duration-500 ${toast.type === 'success'
+            ? 'bg-green-500 text-white'
             : 'bg-red-500 text-white'
-        }`}>
+          }`}>
           <div className="flex items-center space-x-2">
             {toast.type === 'success' ? (
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

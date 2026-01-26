@@ -162,9 +162,9 @@ function ProfileRouter() {
   // Import page
   if (currentPath === '/profile-import') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col">
         <TopBar />
-        <div className="pt-48 pb-12 px-4 sm:px-6 lg:px-8">
+        <div className="flex-1 pt-12 pb-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             {/* Header section */}
             <div className="text-center mb-12">
@@ -235,7 +235,6 @@ function ProfileRouter() {
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <TopBar />
         <div className="pt-48 pb-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             {/* Header section */}

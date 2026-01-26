@@ -383,7 +383,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
     professional: '',
     soft: ''
   });
-  const [skillSearch, setSkillSearch] = useState('');
   const [tempProfileDescription, setTempProfileDescription] = useState('');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [countries, setCountries] = useState([]);
@@ -1603,9 +1602,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         setHasUnsavedChanges(true);
         setModifiedSections(prev => ({ ...prev, skills: true }));
 
-        // Close the dropdown and clear search
+        // Close the dropdown
         setShowSkillDropdown(prev => ({ ...prev, [type]: false }));
-        setSkillSearch('');
       }
     };
 
@@ -1712,130 +1710,90 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     </svg>
                   </button>
                   {showSkillDropdown[type] && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 flex flex-col max-h-[400px]">
-                      <div className="p-3 border-b sticky top-0 bg-white z-[60]">
-                        <div className="relative">
-                          <input
-                            type="text"
-                            placeholder={`Search ${title.toLowerCase()}...`}
-                            className="w-full p-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
-                            value={skillSearch}
-                            onChange={(e) => setSkillSearch(e.target.value)}
-                            autoFocus
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                          {skillSearch && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSkillSearch('');
-                              }}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="overflow-y-auto flex-1">
-                        {(() => {
-                          // Filter skills based on search
-                          const filteredSkillData = {};
-                          let hasResults = false;
-
-                          Object.entries(skillData).forEach(([category, categorySkills]) => {
-                            const filtered = categorySkills.filter(skill =>
-                              skill.name.toLowerCase().includes(skillSearch.toLowerCase()) ||
-                              (skill.description && skill.description.toLowerCase().includes(skillSearch.toLowerCase()))
-                            );
-                            if (filtered.length > 0) {
-                              filteredSkillData[category] = filtered;
-                              hasResults = true;
-                            }
-                          });
-
-                          return hasResults ? (
-                            Object.entries(filteredSkillData).map(([category, categorySkills], categoryIndex) => (
-                              <div key={category} className="mb-0">
-                                <div className="sticky top-0 bg-gray-50 text-gray-600 px-4 py-2 font-bold text-xs uppercase tracking-wider border-y border-gray-100 z-50">
-                                  <div className="flex items-center gap-2">
-                                    <span>{category}</span>
-                                    <span className="ml-auto text-[10px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">
-                                      {categorySkills.length}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div className="bg-white">
-                                  {categorySkills.map((skill, skillIndex) => {
-                                    const isSelected = safeSkills.some(s => {
-                                      if (s.skill && typeof s.skill === 'object') {
-                                        return s.skill._id === skill._id || s.skill.name === skill.name;
-                                      }
-                                      if (typeof s === 'object') {
-                                        return s._id === skill._id || s.name === skill.name;
-                                      }
-                                      return false;
-                                    });
-
-                                    return (
-                                      <button
-                                        key={skill._id}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleSkillSelect(skill);
-                                        }}
-                                        disabled={isSelected}
-                                        className={`w-full px-6 py-3 text-left hover:bg-blue-50 flex items-center justify-between transition-colors duration-150 border-b border-gray-50 last:border-b-0 ${isSelected ? 'bg-green-50/50' : ''
-                                          }`}
-                                      >
-                                        <div className="flex flex-col flex-1">
-                                          <div className="flex items-center gap-2">
-                                            <span className={`text-sm font-semibold ${isSelected ? 'text-green-700' : 'text-gray-800'}`}>
-                                              {skill.name}
-                                            </span>
-                                          </div>
-                                          {skill.description && (
-                                            <span className="text-xs text-gray-500 mt-0.5 line-clamp-2">
-                                              {skill.description}
-                                            </span>
-                                          )}
-                                        </div>
-                                        {isSelected && (
-                                          <div className="flex items-center gap-1.5 ml-4 flex-shrink-0">
-                                            <span className="text-[10px] font-bold text-green-600 uppercase">Added</span>
-                                            <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                          </div>
-                                        )}
-                                      </button>
-                                    );
-                                  })}
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[300px] overflow-y-auto z-20">
+                      {Object.keys(skillData).length > 0 ? (
+                        Object.entries(skillData).map(([category, categorySkills], categoryIndex) => (
+                          <div key={category} className="mb-2 last:mb-0">
+                            {/* Category Header - Much more visible */}
+                            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 font-bold text-sm uppercase tracking-wide shadow-sm">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-white rounded-full"></div>
+                                <span>{category}</span>
+                                <div className="ml-auto text-xs bg-white/20 px-2 py-1 rounded-full">
+                                  {categorySkills.length} skills
                                 </div>
                               </div>
-                            ))
-                          ) : (
-                            <div className="p-8 text-center">
-                              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 mb-3">
-                                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                              </div>
-                              <p className="text-gray-500 text-sm">No skills found matching "{skillSearch}"</p>
-                              <button
-                                onClick={() => setSkillSearch('')}
-                                className="mt-2 text-blue-600 text-sm font-medium hover:underline"
-                              >
-                                Clear search and see all
-                              </button>
                             </div>
-                          );
-                        })()}
-                      </div>
+
+                            {/* Skills in this category */}
+                            <div className="bg-gray-50/30">
+                              {categorySkills.map((skill, skillIndex) => {
+                                // Enhanced skill selection detection for complex structure
+                                const isSelected = safeSkills.some(s => {
+                                  console.log('🔍 Checking if skill is selected:', { s, skill });
+
+                                  // Handle string skills (legacy)
+                                  if (typeof s === 'string' && typeof skill === 'object') {
+                                    return s === skill.name || s === skill.skill;
+                                  }
+
+                                  // Handle complex structure: s.skill._id === skill._id
+                                  if (s.skill && typeof s.skill === 'object' && typeof skill === 'object') {
+                                    return s.skill._id === skill._id || s.skill.name === skill.name;
+                                  }
+
+                                  // Handle direct structure: s._id === skill._id
+                                  if (typeof s === 'object' && typeof skill === 'object') {
+                                    return s._id === skill._id || s.name === skill.name;
+                                  }
+
+                                  // Handle string comparisons
+                                  if (typeof s === 'string' && typeof skill === 'string') {
+                                    return s === skill;
+                                  }
+
+                                  return false;
+                                });
+
+                                return (
+                                  <button
+                                    key={skill._id}
+                                    onClick={() => handleSkillSelect(skill)}
+                                    disabled={isSelected}
+                                    className={`w-full px-6 py-3 text-left hover:bg-blue-50 flex items-center justify-between transition-colors duration-200 ${isSelected
+                                      ? 'bg-green-50 text-green-700 cursor-not-allowed'
+                                      : 'text-gray-700 hover:text-blue-700'
+                                      } ${skillIndex === categorySkills.length - 1 && categoryIndex === Object.keys(skillData).length - 1
+                                        ? 'rounded-b-lg'
+                                        : ''
+                                      }`}
+                                  >
+                                    <div className="flex flex-col flex-1">
+                                      <div className="flex items-center gap-2">
+                                        <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-green-500' : 'bg-blue-400'}`}></div>
+                                        <span className="font-semibold text-sm">{skill.name}</span>
+                                      </div>
+                                      <span className="text-xs text-gray-500 ml-3.5 mt-1 leading-relaxed">
+                                        {skill.description}
+                                      </span>
+                                    </div>
+                                    {isSelected && (
+                                      <div className="flex items-center gap-2 ml-4">
+                                        <span className="text-xs font-medium text-green-600">Selected</span>
+                                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      </div>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-2 text-sm text-gray-500">No skills available</div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1851,7 +1809,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     </svg>
                   </button>
                   {showIndustryDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto z-20">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[300px] overflow-y-auto z-20">
                       {availableIndustries.length > 0 ? (
                         availableIndustries.map((industry) => {
                           const isSelected = safeSkills.some(item =>
@@ -1864,8 +1822,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                               onClick={() => addIndustry(industry)}
                               disabled={isSelected}
                               className={`w-full px-6 py-3 text-left hover:bg-blue-50 flex items-center justify-between transition-colors duration-200 ${isSelected
-                                  ? 'bg-green-50 text-green-700 cursor-not-allowed'
-                                  : 'text-gray-700 hover:text-blue-700'
+                                ? 'bg-green-50 text-green-700 cursor-not-allowed'
+                                : 'text-gray-700 hover:text-blue-700'
                                 }`}
                             >
                               <div className="flex flex-col flex-1">
@@ -1906,7 +1864,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     </svg>
                   </button>
                   {showActivityDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto z-20">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[300px] overflow-y-auto z-20">
                       {availableActivities.length > 0 ? (
                         // Group activities by category
                         Object.entries(
@@ -1942,8 +1900,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                     onClick={() => addActivity(activity)}
                                     disabled={isSelected}
                                     className={`w-full px-6 py-3 text-left hover:bg-blue-50 flex items-center justify-between transition-colors duration-200 ${isSelected
-                                        ? 'bg-green-50 text-green-700 cursor-not-allowed'
-                                        : 'text-gray-700 hover:text-blue-700'
+                                      ? 'bg-green-50 text-green-700 cursor-not-allowed'
+                                      : 'text-gray-700 hover:text-blue-700'
                                       }`}
                                   >
                                     <div className="flex flex-col flex-1">
@@ -2233,12 +2191,33 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
   // NEW: Local availability change handler
   const handleAvailabilityChangeLocal = (field, value) => {
+    let updatedAvailability;
+
+    if (field === 'schedule') {
+      // Handle schedule updates
+      updatedAvailability = {
+        ...editedProfile.availability,
+        schedule: value
+      };
+    } else if (field === 'timeZone' || field === 'flexibility') {
+      // Handle single field updates
+      updatedAvailability = {
+        ...editedProfile.availability,
+        [field]: value
+      };
+    } else if (field === 'tempHours') {
+      updatedAvailability = {
+        ...editedProfile.availability,
+        tempHours: {
+          ...editedProfile.availability?.tempHours,
+          ...value
+        }
+      };
+    }
+
     setEditedProfile(prev => ({
       ...prev,
-      availability: {
-        ...prev.availability,
-        [field]: value
-      }
+      availability: updatedAvailability
     }));
 
     setHasUnsavedChanges(true);
@@ -2450,7 +2429,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                       </button>
                     )}
                     {showCountryDropdown && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[300px] overflow-y-auto z-20">
                         {editedProfile.personalInfo.country && (
                           <button
                             onClick={clearCountrySelection}
@@ -2596,7 +2575,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                           placeholder="Search for a language..."
                         />
                         {showLanguageDropdown && (
-                          <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20">
+                          <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[300px] overflow-y-auto z-20">
                             {(() => {
                               const filteredLanguages = searchLanguages(availableLanguages, languageSearch);
                               const selectedLanguageIds = editedProfile.personalInfo.languages.map(lang =>
@@ -2690,8 +2669,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                           <div
                             key={level.value}
                             className={`p-3 rounded-lg border ${tempLanguage.proficiency === level.value
-                                ? 'border-blue-200 bg-blue-50'
-                                : 'border-gray-100 hover:bg-gray-50'
+                              ? 'border-blue-200 bg-blue-50'
+                              : 'border-gray-100 hover:bg-gray-50'
                               }`}
                           >
                             <div className="flex items-center gap-2 mb-1">
@@ -2800,71 +2779,35 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                       <input
                         type="time"
                         value={editedProfile.availability?.tempHours?.start || '09:00'}
-                        onChange={(e) => {
-                          const newTime = e.target.value;
-                          setEditedProfile(prev => ({
-                            ...prev,
-                            availability: {
-                              ...prev.availability,
-                              tempHours: {
-                                ...prev.availability?.tempHours,
-                                start: newTime
-                              }
-                            }
-                          }));
-                        }}
+                        onChange={(e) => handleAvailabilityChangeLocal('tempHours', { start: e.target.value })}
                         className="w-32 p-2 border rounded"
                       />
                       <span className="text-gray-500">to</span>
                       <input
                         type="time"
                         value={editedProfile.availability?.tempHours?.end || '17:00'}
-                        onChange={(e) => {
-                          const newTime = e.target.value;
-                          setEditedProfile(prev => ({
-                            ...prev,
-                            availability: {
-                              ...prev.availability,
-                              tempHours: {
-                                ...prev.availability?.tempHours,
-                                end: newTime
-                              }
-                            }
-                          }));
-                        }}
+                        onChange={(e) => handleAvailabilityChangeLocal('tempHours', { end: e.target.value })}
                         className="w-32 p-2 border rounded"
                       />
                       <button
                         onClick={() => {
-                          setEditedProfile(prev => {
-                            const defaultStart = prev.availability?.tempHours?.start || '09:00';
-                            const defaultEnd = prev.availability?.tempHours?.end || '17:00';
-                            const currentSchedule = prev.availability?.schedule || [];
+                          const defaultStart = editedProfile.availability?.tempHours?.start || '09:00';
+                          const defaultEnd = editedProfile.availability?.tempHours?.end || '17:00';
+                          const currentSchedule = editedProfile.availability?.schedule || [];
 
-                            if (currentSchedule.length === 0) {
-                              showToast('Please add at least one working day first', 'error');
-                              return prev;
-                            }
+                          if (currentSchedule.length === 0) {
+                            showToast('Please add at least one working day first', 'error');
+                            return;
+                          }
 
-                            const newSchedule = currentSchedule.map(day => ({
-                              ...day,
-                              hours: { start: defaultStart, end: defaultEnd }
-                            }));
-
-                            return {
-                              ...prev,
-                              availability: {
-                                ...prev.availability,
-                                schedule: newSchedule
-                              }
-                            };
-                          });
-
-                          setModifiedSections(prev => ({ ...prev, availability: true }));
-                          setHasUnsavedChanges(true);
-                          showToast('Working hours applied to selected days', 'success');
+                          const newSchedule = currentSchedule.map(day => ({
+                            ...day,
+                            hours: { start: defaultStart, end: defaultEnd }
+                          }));
+                          handleAvailabilityChangeLocal('schedule', newSchedule);
+                          showToast('Applied working hours to all selected days!');
                         }}
-                        className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-100 transition-colors"
+                        className="px-4 py-2 text-sm text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition-colors duration-200"
                       >
                         Apply to Selected Days
                       </button>
@@ -2880,8 +2823,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                           <div
                             key={day}
                             className={`p-4 rounded-lg border ${daySchedule
-                                ? 'border-blue-200 bg-blue-50 shadow-sm'
-                                : 'border-gray-200 bg-white hover:border-blue-200'
+                              ? 'border-blue-200 bg-blue-50 shadow-sm'
+                              : 'border-gray-200 bg-white hover:border-blue-200'
                               }`}
                           >
                             <div className="flex items-center justify-between">
@@ -2947,8 +2890,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                     handleAvailabilityChangeLocal('schedule', newSchedule);
                                   }}
                                   className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${daySchedule
-                                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                                 >
                                   {daySchedule ? 'Remove' : 'Add'}
@@ -3086,8 +3029,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                           handleAvailabilityChangeLocal('flexibility', updatedFlexibility);
                         }}
                         className={`px-4 py-2 rounded text-sm ${editedProfile.availability?.flexibility?.includes(option)
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           }`}
                       >
                         {option}
@@ -3252,8 +3195,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
       {/* Add Toast Component */}
       {toast.show && (
         <div className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg transition-all transform duration-500 ${toast.type === 'success'
-            ? 'bg-green-500 text-white'
-            : 'bg-red-500 text-white'
+          ? 'bg-green-500 text-white'
+          : 'bg-red-500 text-white'
           }`}>
           <div className="flex items-center space-x-2">
             {toast.type === 'success' ? (

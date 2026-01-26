@@ -33,6 +33,21 @@ const styles = `
       opacity: 1;
     }
   }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
 `;
 
 // Add styles to document
@@ -1710,7 +1725,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     </svg>
                   </button>
                   {showSkillDropdown[type] && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[300px] overflow-y-auto z-20">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto z-20">
                       {Object.keys(skillData).length > 0 ? (
                         Object.entries(skillData).map(([category, categorySkills], categoryIndex) => (
                           <div key={category} className="mb-2 last:mb-0">
@@ -1809,7 +1824,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     </svg>
                   </button>
                   {showIndustryDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[300px] overflow-y-auto z-20">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto z-20">
                       {availableIndustries.length > 0 ? (
                         availableIndustries.map((industry) => {
                           const isSelected = safeSkills.some(item =>
@@ -1864,7 +1879,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     </svg>
                   </button>
                   {showActivityDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[300px] overflow-y-auto z-20">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto z-20">
                       {availableActivities.length > 0 ? (
                         // Group activities by category
                         Object.entries(
@@ -2205,14 +2220,6 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
         ...editedProfile.availability,
         [field]: value
       };
-    } else if (field === 'tempHours') {
-      updatedAvailability = {
-        ...editedProfile.availability,
-        tempHours: {
-          ...editedProfile.availability?.tempHours,
-          ...value
-        }
-      };
     }
 
     setEditedProfile(prev => ({
@@ -2341,7 +2348,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
   return (
     <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
       <div className="h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-      <div className="p-8">
+      <div className="p-8 max-h-[calc(100vh-280px)] overflow-y-auto custom-scrollbar">
         <div className="mb-8">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-gray-900">Your Professional Story ✨</h2>
@@ -2429,7 +2436,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                       </button>
                     )}
                     {showCountryDropdown && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[300px] overflow-y-auto z-20">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20">
                         {editedProfile.personalInfo.country && (
                           <button
                             onClick={clearCountrySelection}
@@ -2575,7 +2582,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                           placeholder="Search for a language..."
                         />
                         {showLanguageDropdown && (
-                          <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-[300px] overflow-y-auto z-20">
+                          <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20">
                             {(() => {
                               const filteredLanguages = searchLanguages(availableLanguages, languageSearch);
                               const selectedLanguageIds = editedProfile.personalInfo.languages.map(lang =>
@@ -2779,14 +2786,38 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                       <input
                         type="time"
                         value={editedProfile.availability?.tempHours?.start || '09:00'}
-                        onChange={(e) => handleAvailabilityChangeLocal('tempHours', { start: e.target.value })}
+                        onChange={(e) => {
+                          const newTime = e.target.value;
+                          setEditedProfile(prev => ({
+                            ...prev,
+                            availability: {
+                              ...prev.availability,
+                              tempHours: {
+                                ...prev.availability?.tempHours,
+                                start: newTime
+                              }
+                            }
+                          }));
+                        }}
                         className="w-32 p-2 border rounded"
                       />
                       <span className="text-gray-500">to</span>
                       <input
                         type="time"
                         value={editedProfile.availability?.tempHours?.end || '17:00'}
-                        onChange={(e) => handleAvailabilityChangeLocal('tempHours', { end: e.target.value })}
+                        onChange={(e) => {
+                          const newTime = e.target.value;
+                          setEditedProfile(prev => ({
+                            ...prev,
+                            availability: {
+                              ...prev.availability,
+                              tempHours: {
+                                ...prev.availability?.tempHours,
+                                end: newTime
+                              }
+                            }
+                          }));
+                        }}
                         className="w-32 p-2 border rounded"
                       />
                       <button
@@ -2794,20 +2825,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                           const defaultStart = editedProfile.availability?.tempHours?.start || '09:00';
                           const defaultEnd = editedProfile.availability?.tempHours?.end || '17:00';
                           const currentSchedule = editedProfile.availability?.schedule || [];
-
-                          if (currentSchedule.length === 0) {
-                            showToast('Please add at least one working day first', 'error');
-                            return;
-                          }
-
                           const newSchedule = currentSchedule.map(day => ({
                             ...day,
                             hours: { start: defaultStart, end: defaultEnd }
                           }));
                           handleAvailabilityChangeLocal('schedule', newSchedule);
-                          showToast('Applied working hours to all selected days!');
                         }}
-                        className="px-4 py-2 text-sm text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition-colors duration-200"
+                        className="px-4 py-2 text-sm text-blue-600 bg-blue-50 rounded hover:bg-blue-100"
                       >
                         Apply to Selected Days
                       </button>

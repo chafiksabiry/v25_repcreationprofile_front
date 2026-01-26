@@ -160,9 +160,9 @@ function ProfileRouter() {
   const currentPath = location.pathname;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col">
+    <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col overflow-hidden">
       <TopBar />
-      <div className="flex-1 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="flex-1 overflow-y-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           {/* Header section - Common to both pages */}
           <div className="text-center mb-12">

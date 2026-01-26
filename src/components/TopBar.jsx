@@ -14,7 +14,7 @@ const TopBar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Left side - HARX Logo */}
           <div className="flex items-center">
-            <img 
+            <img
               src={`${import.meta.env.VITE_FRONT_URL}logo_harx.jpg`}
               alt="HARX Logo"
               className="h-10 w-auto object-contain"

@@ -3,14 +3,16 @@ import { Dialog } from '@headlessui/react';
 import { CVParser } from './lib/parsers/cvParser';
 import { useProfile } from './hooks/useProfile';
 import { getLanguageByCode } from './lib/api/languages';
-import { 
-  extractBasicInfo, 
+import {
+  extractBasicInfo,
   analyzeExperience,
   analyzeSkills,
   analyzeAchievements,
   analyzeAvailability,
   generateSummary
 } from './lib/api/profiles';
+
+import Cookies from 'js-cookie';
 
 import { chunkText, safeJSONParse, retryOperation } from './lib/utils/textProcessing';
 
@@ -116,11 +118,11 @@ function ImportDialog({ isOpen, onClose, onImport }) {
       if (skills.languages.length === 0) {
         throw new Error('Languages section is required to generate your profile. Please ensure your CV includes the languages you speak.');
       }
-      
+
       // Match extracted languages with database languages
       addAnalysisStep("Matching languages with database...");
       const matchedLanguages = [];
-      
+
       for (const extractedLang of skills.languages) {
         try {
           const dbLanguage = await getLanguageByCode(extractedLang.iso639_1);
@@ -134,11 +136,11 @@ function ImportDialog({ isOpen, onClose, onImport }) {
           // Skip languages that cannot be matched with the database
         }
       }
-      
+
       if (matchedLanguages.length === 0) {
         throw new Error('No languages could be matched with our database. Please ensure your CV includes common languages.');
       }
-      
+
       addAnalysisStep("Skills categorized and languages matched");
       setProgress(60);
 
@@ -197,7 +199,7 @@ function ImportDialog({ isOpen, onClose, onImport }) {
         experience: (experience.roles || defaultArrays.roles).map(role => {
           const startDate = new Date(role.startDate);
           let endDate = role.endDate === 'present' ? 'present' : new Date(role.endDate);
-          
+
           if (endDate !== 'present' && isNaN(endDate.getTime())) {
             throw new Error(`Invalid end date: ${role.endDate}`);
           }
@@ -219,7 +221,7 @@ function ImportDialog({ isOpen, onClose, onImport }) {
       // Generate optimized summary
       const summary = await generateProfileSummary(combinedData);
       console.log("Generated summary:", summary);
-      
+
       // Ensure we have a valid summary
       if (!summary) {
         throw new Error('Failed to generate summary');
@@ -227,7 +229,7 @@ function ImportDialog({ isOpen, onClose, onImport }) {
 
       // Update combinedData with the generated summary
       combinedData.professionalSummary.profileDescription = summary;
-      
+
       addAnalysisStep("Analysis complete!");
       setProgress(100);
 
@@ -289,9 +291,8 @@ function ImportDialog({ isOpen, onClose, onImport }) {
             <div className="space-y-6">
               <div className="flex flex-col space-y-4">
                 <div
-                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-200 ${
-                    uploadSuccess ? 'border-green-500 bg-green-50' : 'hover:border-blue-500 hover:bg-blue-50'
-                  }`}
+                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-200 ${uploadSuccess ? 'border-green-500 bg-green-50' : 'hover:border-blue-500 hover:bg-blue-50'
+                    }`}
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <input

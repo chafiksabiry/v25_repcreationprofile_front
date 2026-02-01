@@ -1772,139 +1772,92 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 </div>
               ) : type === 'industries' ? (
                 <div className="relative industry-selector flex-1">
-                  <button
-                    onClick={() => setShowIndustryDropdown(!showIndustryDropdown)}
-                    className="w-full p-2 border rounded-md bg-white/50 text-left flex items-center justify-between"
+                  <select
+                    onChange={(e) => {
+                      const selectedId = e.target.value;
+                      if (!selectedId) return;
+                      const industry = availableIndustries.find(i => i._id === selectedId);
+                      if (industry) {
+                        addIndustry(industry);
+                        e.target.value = "";
+                      }
+                    }}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-700 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 cursor-pointer transition-all duration-200 hover:border-blue-300 hover:shadow-md shadow-sm form-select appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: `right 1rem center`, backgroundSize: `1.5em 1.5em` }}
+                    defaultValue=""
                   >
-                    <span className="text-gray-500">Select industries...</span>
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {showIndustryDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto z-20">
-                      {availableIndustries.length > 0 ? (
-                        availableIndustries.map((industry) => {
-                          const isSelected = safeSkills.some(item =>
-                            (typeof item === 'object' ? item._id : item) === industry._id
-                          );
+                    <option value="" disabled className="text-gray-400 bg-white">Select industries...</option>
+                    {availableIndustries.length > 0 ? (
+                      availableIndustries.map((industry) => {
+                        const isSelected = safeSkills.some(item =>
+                          (typeof item === 'object' ? item._id : item) === industry._id
+                        );
 
-                          return (
-                            <button
-                              key={industry._id}
-                              onClick={() => addIndustry(industry)}
-                              disabled={isSelected}
-                              className={`w-full px-6 py-3 text-left hover:bg-blue-50 flex items-center justify-between transition-colors duration-200 ${isSelected
-                                ? 'bg-green-50 text-green-700 cursor-not-allowed'
-                                : 'text-gray-700 hover:text-blue-700'
-                                }`}
-                            >
-                              <div className="flex flex-col flex-1">
-                                <div className="flex items-center gap-2">
-                                  <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-green-500' : 'bg-blue-400'}`}></div>
-                                  <span className="font-semibold text-sm">{industry.name}</span>
-                                </div>
-                                <span className="text-xs text-gray-500 ml-3.5 mt-1 leading-relaxed">
-                                  {industry.description}
-                                </span>
-                              </div>
-                              {isSelected && (
-                                <div className="flex items-center gap-2 ml-4">
-                                  <span className="text-xs font-medium text-green-600">Selected</span>
-                                  <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                  </svg>
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })
-                      ) : (
-                        <div className="px-4 py-2 text-sm text-gray-500">No industries available</div>
-                      )}
-                    </div>
-                  )}
+                        return (
+                          <option
+                            key={industry._id}
+                            value={industry._id}
+                            disabled={isSelected}
+                            className={`py-2 px-4 ${isSelected ? 'text-gray-400 bg-gray-50 italic' : 'text-gray-700 bg-white hover:bg-blue-50'}`}
+                          >
+                            {industry.name} {isSelected ? '(Selected)' : ''}
+                          </option>
+                        );
+                      })
+                    ) : (
+                      <option value="" disabled>No industries available</option>
+                    )}
+                  </select>
                 </div>
               ) : type === 'activities' ? (
                 <div className="relative activity-selector flex-1">
-                  <button
-                    onClick={() => setShowActivityDropdown(!showActivityDropdown)}
-                    className="w-full p-2 border rounded-md bg-white/50 text-left flex items-center justify-between"
+                  <select
+                    onChange={(e) => {
+                      const selectedId = e.target.value;
+                      if (!selectedId) return;
+                      const activity = availableActivities.find(a => a._id === selectedId);
+                      if (activity) {
+                        addActivity(activity);
+                        e.target.value = "";
+                      }
+                    }}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-700 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 cursor-pointer transition-all duration-200 hover:border-blue-300 hover:shadow-md shadow-sm form-select appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: `right 1rem center`, backgroundSize: `1.5em 1.5em` }}
+                    defaultValue=""
                   >
-                    <span className="text-gray-500">Select activities...</span>
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {showActivityDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto z-20">
-                      {availableActivities.length > 0 ? (
-                        // Group activities by category
-                        Object.entries(
-                          availableActivities.reduce((groups, activity) => {
-                            const category = activity.category || 'Other';
-                            if (!groups[category]) groups[category] = [];
-                            groups[category].push(activity);
-                            return groups;
-                          }, {})
-                        ).map(([category, categoryActivities]) => (
-                          <div key={category} className="mb-2 last:mb-0">
-                            {/* Category Header */}
-                            <div className="sticky top-0 bg-gradient-to-r from-green-600 to-teal-600 text-white px-4 py-3 font-bold text-sm uppercase tracking-wide shadow-sm">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-white rounded-full"></div>
-                                <span>{category}</span>
-                                <div className="ml-auto text-xs bg-white/20 px-2 py-1 rounded-full">
-                                  {categoryActivities.length} activities
-                                </div>
-                              </div>
-                            </div>
+                    <option value="" disabled className="text-gray-400 bg-white">Select activities...</option>
+                    {availableActivities.length > 0 ? (
+                      Object.entries(
+                        availableActivities.reduce((groups, activity) => {
+                          const category = activity.category || 'Other';
+                          if (!groups[category]) groups[category] = [];
+                          groups[category].push(activity);
+                          return groups;
+                        }, {})
+                      ).map(([category, categoryActivities]) => (
+                        <optgroup label={category} key={category} className="font-bold text-indigo-900 bg-indigo-50/50">
+                          {categoryActivities.map((activity) => {
+                            const isSelected = safeSkills.some(item =>
+                              (typeof item === 'object' ? item._id : item) === activity._id
+                            );
 
-                            {/* Activities in this category */}
-                            <div className="bg-gray-50/30">
-                              {categoryActivities.map((activity) => {
-                                const isSelected = safeSkills.some(item =>
-                                  (typeof item === 'object' ? item._id : item) === activity._id
-                                );
-
-                                return (
-                                  <button
-                                    key={activity._id}
-                                    onClick={() => addActivity(activity)}
-                                    disabled={isSelected}
-                                    className={`w-full px-6 py-3 text-left hover:bg-blue-50 flex items-center justify-between transition-colors duration-200 ${isSelected
-                                      ? 'bg-green-50 text-green-700 cursor-not-allowed'
-                                      : 'text-gray-700 hover:text-blue-700'
-                                      }`}
-                                  >
-                                    <div className="flex flex-col flex-1">
-                                      <div className="flex items-center gap-2">
-                                        <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-green-500' : 'bg-blue-400'}`}></div>
-                                        <span className="font-semibold text-sm">{activity.name}</span>
-                                      </div>
-                                      <span className="text-xs text-gray-500 ml-3.5 mt-1 leading-relaxed">
-                                        {activity.description}
-                                      </span>
-                                    </div>
-                                    {isSelected && (
-                                      <div className="flex items-center gap-2 ml-4">
-                                        <span className="text-xs font-medium text-green-600">Selected</span>
-                                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                      </div>
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="px-4 py-2 text-sm text-gray-500">No activities available</div>
-                      )}
-                    </div>
-                  )}
+                            return (
+                              <option
+                                key={activity._id}
+                                value={activity._id}
+                                disabled={isSelected}
+                                className={`py-2 px-4 ${isSelected ? 'text-gray-400 bg-gray-50 italic' : 'text-gray-700 bg-white hover:bg-blue-50'}`}
+                              >
+                                {activity.name} {isSelected ? '(Selected)' : ''}
+                              </option>
+                            );
+                          })}
+                        </optgroup>
+                      ))
+                    ) : (
+                      <option value="" disabled>No activities available</option>
+                    )}
+                  </select>
                 </div>
               ) : (
                 <>

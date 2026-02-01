@@ -1725,7 +1725,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     </svg>
                   </button>
                   {showSkillDropdown[type] && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto z-20">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20 custom-scrollbar">
                       {Object.keys(skillData).length > 0 ? (
                         Object.entries(skillData).map(([category, categorySkills], categoryIndex) => (
                           <div key={category} className="mb-2 last:mb-0">

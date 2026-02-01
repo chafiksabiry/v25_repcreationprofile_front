@@ -1712,105 +1712,67 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           {editingProfile && (
             <div className="flex gap-2">
               {isSkillType ? (
-                <div className="relative skill-selector flex-1">
-                  <button
-                    onClick={() => setShowSkillDropdown(prev => ({ ...prev, [type]: !prev[type] }))}
-                    className="w-full p-2 border rounded-md bg-white/50 text-left flex items-center justify-between"
+                <div className="relative flex-1 group">
+                  <select
+                    onChange={(e) => {
+                      const selectedId = e.target.value;
+                      if (!selectedId) return;
+
+                      // Find the selected skill object across all categories
+                      let selectedSkill = null;
+                      // Iterate through values of skillData (which are arrays of skills)
+                      for (const categorySkills of Object.values(skillData)) {
+                        const found = categorySkills.find(s => s._id === selectedId);
+                        if (found) {
+                          selectedSkill = found;
+                          break;
+                        }
+                      }
+
+                      if (selectedSkill) {
+                        handleSkillSelect(selectedSkill);
+                        // Reset selection so the placeholder is shown again
+                        e.target.value = "";
+                      }
+                    }}
+                    className="w-full p-2.5 pr-10 border border-gray-200 rounded-lg bg-white text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none cursor-pointer transition-all duration-200 hover:border-gray-300 shadow-sm"
+                    defaultValue=""
                   >
-                    <span className="text-gray-500">
-                      {`Select ${title.toLowerCase().replace(' skills', '')} skills...`}
-                    </span>
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <option value="" disabled className="text-gray-400">Select {title.toLowerCase().replace(' skills', '')} skills...</option>
+                    {Object.entries(skillData).map(([category, categorySkills]) => (
+                      <optgroup label={category} key={category} className="font-semibold text-gray-900 bg-gray-50">
+                        {categorySkills.map(skill => {
+                          // Check if skill is already selected
+                          const isSelected = safeSkills.some(s => {
+                            if (typeof s === 'string') return s === skill.name || s === skill.skill;
+                            if (s.skill && typeof s.skill === 'object') {
+                              return s.skill._id === skill._id || s.skill.name === skill.name;
+                            }
+                            if (s._id) {
+                              return s._id === skill._id || s.name === skill.name;
+                            }
+                            return false;
+                          });
+
+                          return (
+                            <option
+                              key={skill._id}
+                              value={skill._id}
+                              disabled={isSelected}
+                              className={`py-1 ${isSelected ? 'text-gray-400 bg-gray-50' : 'text-gray-700'}`}
+                            >
+                              {skill.name} {isSelected ? '(Selected)' : ''}
+                            </option>
+                          );
+                        })}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400 group-hover:text-gray-600 transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                     </svg>
-                  </button>
-                  {showSkillDropdown[type] && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto z-20 custom-scrollbar">
-                      {Object.keys(skillData).length > 0 ? (
-                        Object.entries(skillData).map(([category, categorySkills], categoryIndex) => (
-                          <div key={category} className="mb-2 last:mb-0">
-                            {/* Category Header - Much more visible */}
-                            <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 font-bold text-sm uppercase tracking-wide shadow-sm">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-white rounded-full"></div>
-                                <span>{category}</span>
-                                <div className="ml-auto text-xs bg-white/20 px-2 py-1 rounded-full">
-                                  {categorySkills.length} skills
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Skills in this category */}
-                            <div className="bg-gray-50/30">
-                              {categorySkills.map((skill, skillIndex) => {
-                                // Enhanced skill selection detection for complex structure
-                                const isSelected = safeSkills.some(s => {
-                                  console.log('🔍 Checking if skill is selected:', { s, skill });
-
-                                  // Handle string skills (legacy)
-                                  if (typeof s === 'string' && typeof skill === 'object') {
-                                    return s === skill.name || s === skill.skill;
-                                  }
-
-                                  // Handle complex structure: s.skill._id === skill._id
-                                  if (s.skill && typeof s.skill === 'object' && typeof skill === 'object') {
-                                    return s.skill._id === skill._id || s.skill.name === skill.name;
-                                  }
-
-                                  // Handle direct structure: s._id === skill._id
-                                  if (typeof s === 'object' && typeof skill === 'object') {
-                                    return s._id === skill._id || s.name === skill.name;
-                                  }
-
-                                  // Handle string comparisons
-                                  if (typeof s === 'string' && typeof skill === 'string') {
-                                    return s === skill;
-                                  }
-
-                                  return false;
-                                });
-
-                                return (
-                                  <button
-                                    key={skill._id}
-                                    onClick={() => handleSkillSelect(skill)}
-                                    disabled={isSelected}
-                                    className={`w-full px-6 py-3 text-left hover:bg-blue-50 flex items-center justify-between transition-colors duration-200 ${isSelected
-                                      ? 'bg-green-50 text-green-700 cursor-not-allowed'
-                                      : 'text-gray-700 hover:text-blue-700'
-                                      } ${skillIndex === categorySkills.length - 1 && categoryIndex === Object.keys(skillData).length - 1
-                                        ? 'rounded-b-lg'
-                                        : ''
-                                      }`}
-                                  >
-                                    <div className="flex flex-col flex-1">
-                                      <div className="flex items-center gap-2">
-                                        <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-green-500' : 'bg-blue-400'}`}></div>
-                                        <span className="font-semibold text-sm">{skill.name}</span>
-                                      </div>
-                                      <span className="text-xs text-gray-500 ml-3.5 mt-1 leading-relaxed">
-                                        {skill.description}
-                                      </span>
-                                    </div>
-                                    {isSelected && (
-                                      <div className="flex items-center gap-2 ml-4">
-                                        <span className="text-xs font-medium text-green-600">Selected</span>
-                                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                      </div>
-                                    )}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="px-4 py-2 text-sm text-gray-500">No skills available</div>
-                      )}
-                    </div>
-                  )}
+                  </div>
                 </div>
               ) : type === 'industries' ? (
                 <div className="relative industry-selector flex-1">

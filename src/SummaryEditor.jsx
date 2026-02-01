@@ -1735,12 +1735,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                         e.target.value = "";
                       }
                     }}
-                    className="w-full p-2.5 pr-10 border border-gray-200 rounded-lg bg-white text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer transition-all duration-200 hover:border-gray-300 shadow-sm form-select"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-700 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 cursor-pointer transition-all duration-200 hover:border-blue-300 hover:shadow-md shadow-sm form-select appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: `right 1rem center`, backgroundSize: `1.5em 1.5em` }}
                     defaultValue=""
                   >
-                    <option value="" disabled className="text-gray-400">Select {title.toLowerCase().replace(' skills', '')} skills...</option>
+                    <option value="" disabled className="text-gray-400 bg-white">Select {title.toLowerCase().replace(' skills', '')} skills...</option>
                     {Object.entries(skillData).map(([category, categorySkills]) => (
-                      <optgroup label={category} key={category} className="font-semibold text-gray-900 bg-gray-50">
+                      <optgroup label={category} key={category} className="font-bold text-indigo-900 bg-indigo-50/50">
                         {categorySkills.map(skill => {
                           // Check if skill is already selected
                           const isSelected = safeSkills.some(s => {
@@ -1759,7 +1760,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                               key={skill._id}
                               value={skill._id}
                               disabled={isSelected}
-                              className={`py-1 ${isSelected ? 'text-gray-400 bg-gray-50' : 'text-gray-700'}`}
+                              className={`py-2 px-4 ${isSelected ? 'text-gray-400 bg-gray-50 italic' : 'text-gray-700 bg-white hover:bg-blue-50'}`}
                             >
                               {skill.name} {isSelected ? '(Selected)' : ''}
                             </option>

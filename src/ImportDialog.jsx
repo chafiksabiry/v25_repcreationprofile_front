@@ -266,20 +266,20 @@ function ImportDialog({ isOpen, onClose, onImport }) {
           <div className="p-6 overflow-y-auto flex-grow">
             {showGuidance && (
               <div className="mb-8">
-                <div className="bg-blue-50 p-6 rounded-xl mb-6">
-                  <h3 className="text-lg font-semibold text-blue-900 mb-3">Welcome to the Profile Import Wizard! 🚀</h3>
-                  <p className="text-blue-800 mb-4">
+                <div className="bg-harx-50 p-6 rounded-xl mb-6">
+                  <h3 className="text-lg font-semibold text-harx-900 mb-3">Welcome to the Profile Import Wizard! 🚀</h3>
+                  <p className="text-harx-800 mb-4">
                     We'll guide you through the process of creating your professional profile. Here's what to expect:
                   </p>
                   <div className="space-y-4">
                     {steps.map((step, index) => (
                       <div key={index} className="flex items-start">
-                        <div className="flex-shrink-0 h-6 w-6 rounded-full bg-blue-200 flex items-center justify-center text-blue-800 text-sm font-medium">
+                        <div className="flex-shrink-0 h-6 w-6 rounded-full bg-harx-200 flex items-center justify-center text-harx-800 text-sm font-medium">
                           {index + 1}
                         </div>
                         <div className="ml-3">
-                          <h4 className="text-blue-900 font-medium">{step.title}</h4>
-                          <p className="text-blue-700 text-sm">{step.description}</p>
+                          <h4 className="text-harx-900 font-medium">{step.title}</h4>
+                          <p className="text-harx-700 text-sm">{step.description}</p>
                         </div>
                       </div>
                     ))}
@@ -291,7 +291,7 @@ function ImportDialog({ isOpen, onClose, onImport }) {
             <div className="space-y-6">
               <div className="flex flex-col space-y-4">
                 <div
-                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-200 ${uploadSuccess ? 'border-green-500 bg-green-50' : 'hover:border-blue-500 hover:bg-blue-50'
+                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-200 ${uploadSuccess ? 'border-green-500 bg-green-50' : 'hover:border-harx-500 hover:bg-harx-50'
                     }`}
                   onClick={() => fileInputRef.current?.click()}
                 >
@@ -349,7 +349,7 @@ function ImportDialog({ isOpen, onClose, onImport }) {
                 <div className="space-y-3">
                   <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500"
+                      className="h-full bg-gradient-to-r from-harx-500 to-harx-alt-500 transition-all duration-500"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -390,7 +390,7 @@ function ImportDialog({ isOpen, onClose, onImport }) {
             </button>
             {text && (
               <button
-                className="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 transition-all duration-200 transform hover:scale-105"
+                className="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-harx-600 to-harx-alt-600 rounded-lg hover:from-harx-700 hover:to-harx-alt-700 disabled:opacity-50 transition-all duration-200 transform hover:scale-105"
                 onClick={() => parseProfile()}
                 disabled={loading || !text}
               >

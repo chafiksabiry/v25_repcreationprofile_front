@@ -224,7 +224,7 @@ const ExperienceForm = ({ experience, onSubmit, isNew = false }) => {
               console.log('🔥 Title input onChange event:', e.target.value);
               handleInputChange('title', e.target.value);
             }}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-harx-500 focus:border-harx-500 bg-white"
             placeholder="e.g. Software Engineer"
             autoComplete="off"
           />
@@ -238,7 +238,7 @@ const ExperienceForm = ({ experience, onSubmit, isNew = false }) => {
               console.log('🔥 Company input onChange event:', e.target.value);
               handleInputChange('company', e.target.value);
             }}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-harx-500 focus:border-harx-500 bg-white"
             placeholder="e.g. Tech Corp"
             autoComplete="off"
           />
@@ -252,7 +252,7 @@ const ExperienceForm = ({ experience, onSubmit, isNew = false }) => {
               console.log('🔥 Start Date input onChange event:', e.target.value);
               handleInputChange('startDate', e.target.value);
             }}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-harx-500 focus:border-harx-500 bg-white"
           />
         </div>
         <div>
@@ -266,7 +266,7 @@ const ExperienceForm = ({ experience, onSubmit, isNew = false }) => {
                 handleInputChange('endDate', e.target.value);
               }}
               disabled={formData.isPresent}
-              className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed bg-white"
+              className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-harx-500 focus:border-harx-500 disabled:bg-gray-100 disabled:cursor-not-allowed bg-white"
             />
             <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
               <input
@@ -298,7 +298,7 @@ const ExperienceForm = ({ experience, onSubmit, isNew = false }) => {
                 console.log(`🔥 Responsibility ${index} input onChange event:`, e.target.value);
                 handleResponsibilityChange(index, e.target.value);
               }}
-              className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-harx-500 focus:border-harx-500 bg-white"
               placeholder="Add a responsibility"
               autoComplete="off"
             />
@@ -324,7 +324,7 @@ const ExperienceForm = ({ experience, onSubmit, isNew = false }) => {
             console.log('🔥 Add responsibility button clicked');
             addResponsibilityField();
           }}
-          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1 transition-colors duration-200"
+          className="text-harx-600 hover:text-harx-700 hover:bg-harx-50 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1 transition-colors duration-200"
           type="button"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -350,7 +350,7 @@ const ExperienceForm = ({ experience, onSubmit, isNew = false }) => {
             console.log('🔥 Save button clicked');
             handleSubmit();
           }}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          className="px-4 py-2 text-sm font-medium text-white bg-harx-600 rounded-lg hover:bg-harx-700 transition-colors duration-200"
           type="button"
         >
           {isNew ? 'Add Experience' : 'Save Changes'}
@@ -1690,7 +1690,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               return (
                 <div
                   key={skill?.skill?._id || skill?._id || index}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-purple-50 text-gray-700 rounded-full text-sm font-medium border border-gray-200 hover:shadow-md transition-shadow duration-200 group"
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-harx-50 to-harx-alt-50 text-gray-700 rounded-full text-sm font-medium border border-gray-200 hover:shadow-md transition-shadow duration-200 group"
                 >
                   <span>{skillName}</span>
                   {editingProfile && (
@@ -1735,13 +1735,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                         e.target.value = "";
                       }
                     }}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-700 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 cursor-pointer transition-all duration-200 hover:border-blue-300 hover:shadow-md shadow-sm form-select appearance-none"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-700 text-sm font-medium outline-none focus:ring-4 focus:ring-harx-500/10 focus:border-harx-500 cursor-pointer transition-all duration-200 hover:border-harx-300 hover:shadow-md shadow-sm form-select appearance-none"
                     style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: `right 1rem center`, backgroundSize: `1.5em 1.5em` }}
                     defaultValue=""
                   >
                     <option value="" disabled className="text-gray-400 bg-white">Select {title.toLowerCase().replace(' skills', '')} skills...</option>
                     {Object.entries(skillData).map(([category, categorySkills]) => (
-                      <optgroup label={category} key={category} className="font-bold text-indigo-900 bg-indigo-50/50">
+                      <optgroup label={category} key={category} className="font-bold text-harx-900 bg-harx-50/50">
                         {categorySkills.map(skill => {
                           // Check if skill is already selected
                           const isSelected = safeSkills.some(s => {
@@ -1760,7 +1760,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                               key={skill._id}
                               value={skill._id}
                               disabled={isSelected}
-                              className={`py-2 px-4 ${isSelected ? 'text-gray-400 bg-gray-50 italic' : 'text-gray-700 bg-white hover:bg-blue-50'}`}
+                              className={`py-2 px-4 ${isSelected ? 'text-gray-400 bg-gray-50 italic' : 'text-gray-700 bg-white hover:bg-harx-50'}`}
                             >
                               {skill.name} {isSelected ? '(Selected)' : ''}
                             </option>
@@ -1782,7 +1782,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                         e.target.value = "";
                       }
                     }}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-700 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 cursor-pointer transition-all duration-200 hover:border-blue-300 hover:shadow-md shadow-sm form-select appearance-none"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-700 text-sm font-medium outline-none focus:ring-4 focus:ring-harx-500/10 focus:border-harx-500 cursor-pointer transition-all duration-200 hover:border-harx-300 hover:shadow-md shadow-sm form-select appearance-none"
                     style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: `right 1rem center`, backgroundSize: `1.5em 1.5em` }}
                     defaultValue=""
                   >
@@ -1798,7 +1798,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                             key={industry._id}
                             value={industry._id}
                             disabled={isSelected}
-                            className={`py-2 px-4 ${isSelected ? 'text-gray-400 bg-gray-50 italic' : 'text-gray-700 bg-white hover:bg-blue-50'}`}
+                            className={`py-2 px-4 ${isSelected ? 'text-gray-400 bg-gray-50 italic' : 'text-gray-700 bg-white hover:bg-harx-50'}`}
                           >
                             {industry.name} {isSelected ? '(Selected)' : ''}
                           </option>
@@ -1821,7 +1821,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                         e.target.value = "";
                       }
                     }}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-700 text-sm font-medium outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 cursor-pointer transition-all duration-200 hover:border-blue-300 hover:shadow-md shadow-sm form-select appearance-none"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-700 text-sm font-medium outline-none focus:ring-4 focus:ring-harx-500/10 focus:border-harx-500 cursor-pointer transition-all duration-200 hover:border-harx-300 hover:shadow-md shadow-sm form-select appearance-none"
                     style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: `right 1rem center`, backgroundSize: `1.5em 1.5em` }}
                     defaultValue=""
                   >
@@ -1835,7 +1835,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                           return groups;
                         }, {})
                       ).map(([category, categoryActivities]) => (
-                        <optgroup label={category} key={category} className="font-bold text-indigo-900 bg-indigo-50/50">
+                        <optgroup label={category} key={category} className="font-bold text-harx-900 bg-harx-50/50">
                           {categoryActivities.map((activity) => {
                             const isSelected = safeSkills.some(item =>
                               (typeof item === 'object' ? item._id : item) === activity._id
@@ -1846,7 +1846,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                 key={activity._id}
                                 value={activity._id}
                                 disabled={isSelected}
-                                className={`py-2 px-4 ${isSelected ? 'text-gray-400 bg-gray-50 italic' : 'text-gray-700 bg-white hover:bg-blue-50'}`}
+                                className={`py-2 px-4 ${isSelected ? 'text-gray-400 bg-gray-50 italic' : 'text-gray-700 bg-white hover:bg-harx-50'}`}
                               >
                                 {activity.name} {isSelected ? '(Selected)' : ''}
                               </option>
@@ -1876,7 +1876,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   />
                   <button
                     onClick={handleAdd}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 flex items-center gap-2"
+                    className="px-4 py-2 text-sm font-medium text-white bg-harx-600 rounded-md hover:bg-harx-700 flex items-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1920,7 +1920,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
             {editingProfile && (
               <button
                 onClick={() => setShowNewExperienceForm(true)}
-                className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200 flex items-center gap-2"
+                className="px-4 py-2 text-sm font-medium text-harx-600 bg-harx-50 rounded-lg hover:bg-harx-100 transition-colors duration-200 flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -1955,7 +1955,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                       <div className="absolute top-4 right-4 opacity-60 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
                         <button
                           onClick={() => setEditingExperience(role)}
-                          className="p-2 text-blue-600 hover:text-blue-700 bg-white rounded-full shadow-sm hover:shadow-md transition-all duration-200 border border-blue-200"
+                          className="p-2 text-harx-600 hover:text-harx-700 bg-white rounded-full shadow-sm hover:shadow-md transition-all duration-200 border border-harx-200"
                           title="Edit experience"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1985,7 +1985,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     <ul className="mt-3 space-y-2">
                       {role.responsibilities?.map((resp, idx) => (
                         <li key={idx} className="text-gray-700 flex items-start">
-                          <span className="text-blue-500 mr-2">•</span>
+                          <span className="text-harx-500 mr-2">•</span>
                           {resp}
                         </li>
                       ))}
@@ -2258,7 +2258,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
 
   return (
     <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-      <div className="h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+      <div className="h-2 bg-gradient-to-r from-harx-500 via-harx-alt-500 to-harx-600"></div>
       <div className="p-8 max-h-[calc(100vh-280px)] overflow-y-auto custom-scrollbar">
         <div className="mb-8">
           <div className="flex justify-between items-center mb-6">
@@ -2294,7 +2294,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               ) : (
                 <button
                   onClick={() => setEditingProfile(true)}
-                  className="px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-blue-600 bg-blue-50 hover:bg-blue-100"
+                  className="px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 text-harx-600 bg-harx-50 hover:bg-harx-100"
                 >
                   ✏️ Edit Profile
                 </button>
@@ -2306,7 +2306,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {editingProfile ? (
               <>
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-harx-50 to-harx-alt-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">👤 Name</h3>
                   <input
                     type="text"
@@ -2317,7 +2317,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   />
                   {renderError(validationErrors.name, 'name')}
                 </div>
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-harx-50 to-harx-alt-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">🌍 Country</h3>
                   <div className="relative country-selector">
                     <input
@@ -2364,7 +2364,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                             <button
                               key={country._id}
                               onClick={() => handleCountrySelect(country)}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center justify-between border-b border-gray-100 last:border-b-0"
+                              className="w-full px-4 py-2 text-left text-sm hover:bg-harx-50 flex items-center justify-between border-b border-gray-100 last:border-b-0"
                             >
                               <span className="font-medium">{country.countryName}</span>
                               <span className="text-gray-500 text-xs">{country.countryCode}</span>
@@ -2381,7 +2381,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   {renderError(validationErrors.country, 'country')}
                   <CountryMismatchWarning currentCountry={editedProfile.personalInfo?.country} />
                 </div>
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-harx-50 to-harx-alt-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">📧 Email</h3>
                   <input
                     type="email"
@@ -2392,7 +2392,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   />
                   {renderError(validationErrors.email, 'email')}
                 </div>
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-harx-50 to-harx-alt-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">📱 Phone</h3>
                   <input
                     type="tel"
@@ -2403,7 +2403,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   />
                   {renderError(validationErrors.phone, 'phone')}
                 </div>
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl col-span-2">
+                <div className="p-4 bg-gradient-to-br from-harx-50 to-harx-alt-50 rounded-xl col-span-2">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">🌍 Languages</h3>
                   <div className="space-y-4">
                     <div className="flex flex-wrap gap-2">
@@ -2428,7 +2428,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                   const dropdown = e.currentTarget.nextElementSibling;
                                   dropdown.classList.toggle('hidden');
                                 }}
-                                className="flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
+                                className="flex items-center gap-1 text-sm font-medium text-harx-600 hover:text-harx-700"
                               >
                                 {lang.proficiency}
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2439,7 +2439,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                 {proficiencyLevels.map(level => (
                                   <button
                                     key={level.value}
-                                    className={`w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center justify-between group/item ${lang.proficiency === level.value ? 'text-blue-600 bg-blue-50/50' : 'text-gray-700'
+                                    className={`w-full px-4 py-2 text-left text-sm hover:bg-harx-50 flex items-center justify-between group/item ${lang.proficiency === level.value ? 'text-harx-600 bg-harx-50/50' : 'text-gray-700'
                                       }`}
                                     onClick={async () => {
                                       await updateLanguageProficiency(index, level.value);
@@ -2450,7 +2450,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                   >
                                     <span>{level.label}</span>
                                     {lang.proficiency === level.value && (
-                                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <svg className="w-4 h-4 text-harx-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                       </svg>
                                     )}
@@ -2512,13 +2512,13 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                       setShowLanguageDropdown(false);
                                       setLanguageSearch('');
                                     }}
-                                    className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center justify-between border-b border-gray-100 last:border-b-0"
+                                    className="w-full px-4 py-2 text-left text-sm hover:bg-harx-50 flex items-center justify-between border-b border-gray-100 last:border-b-0"
                                   >
                                     <div className="flex flex-col">
                                       <span className="font-medium">{language.name}</span>
                                       <span className="text-xs text-gray-500">{language.nativeName}</span>
                                     </div>
-                                    <span className="text-xs text-blue-600 font-mono">{language.code}</span>
+                                    <span className="text-xs text-harx-600 font-mono">{language.code}</span>
                                   </button>
                                 ))
                               ) : languageSearch ? (
@@ -2549,7 +2549,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                           {proficiencyLevels.map(level => (
                             <button
                               key={level.value}
-                              className={`w-full px-4 py-2 text-left text-sm hover:bg-blue-50 flex items-center justify-between ${tempLanguage.proficiency === level.value ? 'text-blue-600 bg-blue-50/50' : 'text-gray-700'
+                              className={`w-full px-4 py-2 text-left text-sm hover:bg-harx-50 flex items-center justify-between ${tempLanguage.proficiency === level.value ? 'text-harx-600 bg-harx-50/50' : 'text-gray-700'
                                 }`}
                               onClick={() => {
                                 setTempLanguage(prev => ({ ...prev, proficiency: level.value }));
@@ -2560,7 +2560,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                             >
                               <span>{level.label}</span>
                               {tempLanguage.proficiency === level.value && (
-                                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4 text-harx-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                               )}
@@ -2570,7 +2570,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                       </div>
                       <button
                         onClick={addLanguage}
-                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 flex items-center gap-2"
+                        className="px-4 py-2 text-sm font-medium text-white bg-harx-600 rounded-md hover:bg-harx-700 flex items-center gap-2"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -2587,14 +2587,14 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                           <div
                             key={level.value}
                             className={`p-3 rounded-lg border ${tempLanguage.proficiency === level.value
-                              ? 'border-blue-200 bg-blue-50'
+                              ? 'border-harx-200 bg-harx-50'
                               : 'border-gray-100 hover:bg-gray-50'
                               }`}
                           >
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-medium text-gray-800">{level.label}</span>
                               {tempLanguage.proficiency === level.value && (
-                                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4 text-harx-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                               )}
@@ -2609,12 +2609,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               </>
             ) : (
               <>
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-harx-50 to-harx-alt-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">👤 Name</h3>
                   <p className="text-xl font-semibold text-gray-800">{editedProfile.personalInfo.name || 'Not specified'}</p>
                   {renderError(validationErrors.name, 'name')}
                 </div>
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-harx-50 to-harx-alt-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">🌍 Country</h3>
                   <p className="text-xl font-semibold text-gray-800">
                     {typeof editedProfile.personalInfo.country === 'object'
@@ -2624,17 +2624,17 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   {renderError(validationErrors.country, 'country')}
                   <CountryMismatchWarning currentCountry={editedProfile.personalInfo?.country} />
                 </div>
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-harx-50 to-harx-alt-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">📧 Email</h3>
                   <p className="text-xl font-semibold text-gray-800">{editedProfile.personalInfo.email || 'Not specified'}</p>
                   {renderError(validationErrors.email, 'email')}
                 </div>
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-harx-50 to-harx-alt-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">📱 Phone</h3>
                   <p className="text-xl font-semibold text-gray-800">{editedProfile.personalInfo.phone || 'Not specified'}</p>
                   {renderError(validationErrors.phone, 'phone')}
                 </div>
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl col-span-1">
+                <div className="p-4 bg-gradient-to-br from-harx-50 to-harx-alt-50 rounded-xl col-span-1">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">🌍 Languages</h3>
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-2">
@@ -2649,7 +2649,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                             className="px-3 py-1 bg-white/50 text-gray-700 rounded-full text-sm font-medium group relative"
                           >
                             <span>{languageName}</span>
-                            <span className="text-blue-600 ml-1">({lang.proficiency})</span>
+                            <span className="text-harx-600 ml-1">({lang.proficiency})</span>
                             {languageCode && <span className="text-gray-500 text-xs ml-1">[{languageCode}]</span>}
                             <div className="absolute hidden group-hover:block bg-black text-white text-xs rounded p-2 z-10 bottom-full mb-1 left-1/2 transform -translate-x-1/2 w-48">
                               {proficiencyLevels.find(level => level.value === lang.proficiency)?.description}
@@ -2661,7 +2661,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     {renderError(validationErrors.languages, 'languages')}
                   </div>
                 </div>
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
+                <div className="p-4 bg-gradient-to-br from-harx-50 to-harx-alt-50 rounded-xl">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">⭐ Experience</h3>
                   <p className="text-xl font-semibold text-gray-800">{editedProfile.professionalSummary.yearsOfExperience || 0} years</p>
                   {renderError(validationErrors.yearsExperience, 'yearsExperience')}
@@ -2742,7 +2742,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                           }));
                           handleAvailabilityChangeLocal('schedule', newSchedule);
                         }}
-                        className="px-4 py-2 text-sm text-blue-600 bg-blue-50 rounded hover:bg-blue-100"
+                        className="px-4 py-2 text-sm text-harx-600 bg-harx-50 rounded hover:bg-harx-100"
                       >
                         Apply to Selected Days
                       </button>
@@ -2758,8 +2758,8 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                           <div
                             key={day}
                             className={`p-4 rounded-lg border ${daySchedule
-                              ? 'border-blue-200 bg-blue-50 shadow-sm'
-                              : 'border-gray-200 bg-white hover:border-blue-200'
+                              ? 'border-harx-200 bg-harx-50 shadow-sm'
+                              : 'border-gray-200 bg-white hover:border-harx-200'
                               }`}
                           >
                             <div className="flex items-center justify-between">
@@ -2825,7 +2825,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                                     handleAvailabilityChangeLocal('schedule', newSchedule);
                                   }}
                                   className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${daySchedule
-                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                    ? 'bg-harx-600 text-white hover:bg-harx-700'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                                 >
@@ -2890,12 +2890,12 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                               <button
                                 key={timezone._id}
                                 onClick={() => handleTimezoneSelect(timezone)}
-                                className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 border-b border-gray-100 last:border-b-0"
+                                className="w-full px-4 py-2 text-left text-sm hover:bg-harx-50 border-b border-gray-100 last:border-b-0"
                               >
                                 <div className="flex flex-col">
                                   <span className="font-medium">{timezone.countryName}</span>
                                   <span className="text-xs text-gray-500">{timezone.zoneName}</span>
-                                  <span className="text-xs text-blue-600">GMT{timezone.gmtOffset >= 0 ? '+' : ''}{Math.floor(timezone.gmtOffset / 3600)}:{Math.abs(timezone.gmtOffset % 3600 / 60).toString().padStart(2, '0')}</span>
+                                  <span className="text-xs text-harx-600">GMT{timezone.gmtOffset >= 0 ? '+' : ''}{Math.floor(timezone.gmtOffset / 3600)}:{Math.abs(timezone.gmtOffset % 3600 / 60).toString().padStart(2, '0')}</span>
                                 </div>
                               </button>
                             ))
@@ -2911,7 +2911,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                     {/* Suggest timezone button */}
                     <button
                       onClick={suggestTimezoneForCurrentCountry}
-                      className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200 flex items-center gap-2 whitespace-nowrap"
+                      className="px-4 py-2 text-sm font-medium text-harx-600 bg-harx-50 rounded-lg hover:bg-harx-100 transition-colors duration-200 flex items-center gap-2 whitespace-nowrap"
                       title="Suggest timezone based on your selected country"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2964,7 +2964,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                           handleAvailabilityChangeLocal('flexibility', updatedFlexibility);
                         }}
                         className={`px-4 py-2 rounded text-sm ${editedProfile.availability?.flexibility?.includes(option)
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-harx-600 text-white'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           }`}
                       >
@@ -3048,7 +3048,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 <button
                   onClick={regenerateSummary}
                   disabled={loading}
-                  className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50 transition-colors duration-200"
+                  className="px-4 py-2 text-sm font-medium text-harx-600 bg-harx-50 rounded-lg hover:bg-harx-100 disabled:opacity-50 transition-colors duration-200"
                 >
                   {loading ? '✨ Working Magic...' : '🔄 Regenerate Summary'}
                 </button>
@@ -3059,7 +3059,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 <textarea
                   value={editedSummary}
                   onChange={(e) => handleSummaryChange(e.target.value)}
-                  className="w-full h-64 p-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full h-64 p-4 border rounded-xl focus:ring-2 focus:ring-harx-500 focus:border-harx-500"
                   placeholder="Edit your professional summary..."
                 />
                 <div className="flex justify-end space-x-3">
@@ -3083,7 +3083,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                   </button>
                   <button
                     onClick={() => setIsEditing(false)}
-                    className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:from-blue-700 hover:to-purple-700"
+                    className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-harx-600 to-harx-alt-600 rounded-lg hover:from-harx-700 hover:to-harx-alt-700"
                   >
                     Done Editing
                   </button>
@@ -3091,7 +3091,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
               </div>
             ) : (
               <div className="relative">
-                <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-xl">
+                <div className="bg-gradient-to-br from-harx-50 to-harx-alt-50 p-6 rounded-xl">
                   <p className="text-gray-800 whitespace-pre-line text-lg leading-relaxed">
                     {editedProfile.professionalSummary?.profileDescription || 'No professional summary yet. Click "Regenerate Summary" to create one, or "Edit" to write your own.'}
                   </p>
@@ -3099,7 +3099,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
                 {editingProfile && (
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="absolute top-4 right-4 p-2 text-gray-500 hover:text-blue-600 bg-white rounded-full shadow-sm hover:shadow-md transition-all duration-200"
+                    className="absolute top-4 right-4 p-2 text-gray-500 hover:text-harx-600 bg-white rounded-full shadow-sm hover:shadow-md transition-all duration-200"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -3115,7 +3115,7 @@ function SummaryEditor({ profileData, generatedSummary, setGeneratedSummary, onP
             <div className="mt-8 flex justify-end">
               <button
                 onClick={pushToRepsProfile}
-                className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors duration-200 flex items-center gap-2"
+                className="px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-harx-600 to-harx-alt-600 rounded-lg hover:from-harx-700 hover:to-harx-alt-700 transition-colors duration-200 flex items-center gap-2"
               >
                 <span>🚀 View Your REPS Profile</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

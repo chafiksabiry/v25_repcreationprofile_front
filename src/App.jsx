@@ -13,7 +13,7 @@ import { useProfile } from './hooks/useProfile';
 const Loading = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="flex flex-col items-center">
-      <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-harx-500"></div>
       <p className="mt-4 text-gray-600">Loading your profile...</p>
     </div>
   </div>
@@ -160,7 +160,7 @@ function ProfileRouter() {
   const currentPath = location.pathname;
 
   return (
-    <div className="h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-harx-50 via-white to-harx-alt-50 flex flex-col overflow-hidden">
       <TopBar />
       <div className="flex-1 overflow-y-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
@@ -168,8 +168,8 @@ function ProfileRouter() {
           <div className="text-center mb-12">
             <div className="flex items-center justify-center mb-6">
               <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur opacity-25"></div>
-                <h1 className="relative bg-white px-8 py-4 rounded-lg text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+                <div className="absolute -inset-1 bg-gradient-to-r from-harx-600 to-harx-alt-600 rounded-lg blur opacity-25"></div>
+                <h1 className="relative bg-white px-8 py-4 rounded-lg text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-harx-600 to-harx-alt-600">
                   HARX REPS Profile Wizard ✨
                 </h1>
               </div>
@@ -185,10 +185,10 @@ function ProfileRouter() {
           {currentPath === '/profile-import' ? (
             <>
               <div className="text-center py-12 bg-white rounded-2xl shadow-xl border border-gray-100 relative overflow-hidden">
-                <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+                <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-harx-500 via-harx-alt-500 to-harx-600"></div>
                 <div className="relative">
-                  <div className="bg-gradient-to-br from-blue-100 to-purple-100 w-24 h-24 rounded-full mx-auto mb-6 flex items-center justify-center">
-                    <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="bg-gradient-to-br from-harx-100 to-harx-alt-100 w-24 h-24 rounded-full mx-auto mb-6 flex items-center justify-center">
+                    <svg className="w-12 h-12 text-harx-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
@@ -198,7 +198,7 @@ function ProfileRouter() {
                   </p>
                   <button
                     onClick={() => setIsImportOpen(true)}
-                    className="inline-flex items-center px-6 py-3 text-lg font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-full hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transform transition-all duration-200 hover:scale-105"
+                    className="inline-flex items-center px-6 py-3 text-lg font-medium text-white bg-gradient-to-r from-harx-600 to-harx-alt-600 rounded-full hover:from-harx-700 hover:to-harx-alt-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-harx-500 transform transition-all duration-200 hover:scale-105"
                   >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
